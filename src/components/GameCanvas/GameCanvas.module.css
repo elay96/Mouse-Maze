@@ -1,0 +1,327 @@
+/* Game Canvas Styles - Minimal Research UI */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 840px;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.roundInfo {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.score {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  color: #64748b;
+}
+
+.scoreValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #1a1a2e;
+  font-size: 1rem;
+}
+
+.timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #3b82f6;
+  min-width: 80px;
+  text-align: right;
+}
+
+.canvasWrapper {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.canvas {
+  display: block;
+  width: min(88vw, 720px);
+  height: min(88vw, 720px);
+  cursor: crosshair;
+  background: #f5f5f5;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.overlayContent {
+  text-align: center;
+  padding: 2.5rem;
+  max-width: 360px;
+}
+
+.overlayContent h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 1rem;
+}
+
+.overlayContent p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.startButton {
+  margin-top: 1.25rem;
+  padding: 0.875rem 2rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.startButton:hover {
+  background: #2563eb;
+}
+
+.startButton:active {
+  background: #1d4ed8;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 840px;
+}
+
+.conditionBadge {
+  padding: 0.375rem 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+  text-transform: uppercase;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.conditionBadge[data-condition="CLUSTER"] {
+  color: #6366f1;
+  background: #eef2ff;
+}
+
+.conditionBadge[data-condition="NOISE"] {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.instructions {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Timer warning states */
+.timer[data-warning="true"] {
+  color: #d97706;
+}
+
+.timer[data-critical="true"] {
+  color: #dc2626;
+  animation: pulse 0.75s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Missed rewards overlay */
+.missedOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2rem;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.9) 40%, transparent 100%);
+  pointer-events: auto;
+}
+
+.missedContent {
+  text-align: center;
+  padding: 1.5rem 2.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.missedContent h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 0.75rem;
+}
+
+.missedContent p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  color: #475569;
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+
+.missedContent strong {
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.missedNote {
+  font-size: 0.8125rem !important;
+  color: #94a3b8 !important;
+}
+
+.redText {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.continueButton {
+  margin-top: 1rem;
+  padding: 0.75rem 2rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.continueButton:hover {
+  background: #2563eb;
+}
+
+.continueButton:active {
+  background: #1d4ed8;
+}
+
+/* Countdown overlay - shows over frozen canvas */
+.countdownOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.countdownContent {
+  text-align: center;
+  padding: 2.5rem 3rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.countdownContent h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 0.75rem;
+}
+
+.finalScore {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0 0 1.5rem;
+}
+
+.finalScore strong {
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.getReady {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin: 0 0 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.countdownTimer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+}
+
+.countdownNumber {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.countdownText {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 0;
+}

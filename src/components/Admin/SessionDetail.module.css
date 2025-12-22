@@ -1,0 +1,386 @@
+/* Session Detail Styles - Clean Research UI */
+
+.container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 1.5rem 2rem;
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  color: #94a3b8;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backButton:hover {
+  color: #3b82f6;
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.backButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sessionInfo {
+  flex: 1;
+}
+
+.participantId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 0.375rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.conditionBadge {
+  padding: 0.25rem 0.625rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 100px;
+}
+
+.conditionBadge[data-condition="CLUSTER"] {
+  color: #6366f1;
+  background: #eef2ff;
+}
+
+.conditionBadge[data-condition="NOISE"] {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.date {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.ageGender {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.legacyBadge {
+  font-size: 0.5625rem;
+  padding: 0.125rem 0.375rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statusBadge {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.statusBadge[data-status="complete"] {
+  color: #10b981;
+  background: #ecfdf5;
+}
+
+.statusBadge[data-status="incomplete"] {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.exportButtons {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.exportButton {
+  padding: 0.5rem 0.875rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exportButton:hover {
+  background: #f8f9fa;
+  border-color: #cbd5e1;
+}
+
+.roundSelector {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+  padding: 0.375rem;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow-x: auto;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.roundTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.625rem 1.25rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.roundTab:hover {
+  color: #64748b;
+  background: #f8f9fa;
+}
+
+.roundTab[data-active="true"] {
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.roundScore {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  color: #3b82f6;
+}
+
+.tabBar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: #64748b;
+}
+
+.tab[data-active="true"] {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+.statsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.statCard {
+  padding: 1.25rem;
+  background: #ffffff;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.statCard .statValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 0.125rem;
+}
+
+.statCard .statLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statsSection {
+  padding: 1.25rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sectionTitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.875rem;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.statName {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.statNumber {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.quadrants {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  max-width: 180px;
+}
+
+.quadrant {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0.625rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.quadrantLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.quadrantValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Screenshot Section */
+.screenshotSection {
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.screenshotWrapper {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.screenshotCanvas {
+  display: block;
+  width: 360px;
+  height: 360px;
+  background: #f5f5f5;
+}
+
+.downloadButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1.25rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #10b981;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.downloadButton:hover {
+  background: #059669;
+}
+
+.downloadButton svg {
+  width: 16px;
+  height: 16px;
+}
