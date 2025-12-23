@@ -146,8 +146,14 @@ function App() {
 
       await createSession(newSession);
       
-      // Also sync to cloud
-      cloudCreateSession(newSession);
+      // Also sync to cloud (don't await to not block UI, but log result)
+      cloudCreateSession(newSession).then(success => {
+        if (success) {
+          console.log('[App] ✅ Session synced to cloud');
+        } else {
+          console.warn('[App] ⚠️ Failed to sync session to cloud');
+        }
+      });
       
       setSessionId(newSessionId);
       setSession(newSession);

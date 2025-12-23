@@ -133,22 +133,30 @@ function dbToEvent(db: DbEvent): GameEvent {
 
 export async function cloudCreateSession(session: Session): Promise<boolean> {
   if (!isSupabaseConfigured()) {
-    console.warn('Supabase not configured, skipping cloud sync');
+    console.warn('[Cloud] Supabase not configured, skipping cloud sync');
     return false;
   }
 
+  console.log('[Cloud] Creating session:', session.sessionId);
+  
   try {
-    const { error } = await supabase
+    const dbSession = sessionToDb(session);
+    console.log('[Cloud] Session data to insert:', dbSession);
+    
+    const { data, error } = await supabase
       .from('sessions')
-      .insert(sessionToDb(session));
+      .insert(dbSession)
+      .select();
 
     if (error) {
-      console.error('Error creating session in cloud:', error);
+      console.error('[Cloud] ❌ Error creating session:', error.message, error.details, error.hint);
       return false;
     }
+    
+    console.log('[Cloud] ✅ Session created successfully:', data);
     return true;
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.error('[Cloud] ❌ Exception creating session:', err);
     return false;
   }
 }
@@ -156,24 +164,28 @@ export async function cloudCreateSession(session: Session): Promise<boolean> {
 export async function cloudUpdateSession(sessionId: string, updates: Partial<Session>): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
 
+  console.log('[Cloud] Updating session:', sessionId, updates);
+  
   try {
     const dbUpdates: Partial<DbSession> = {};
     if (updates.roundsCompleted !== undefined) dbUpdates.rounds_completed = updates.roundsCompleted;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.endTimestamp !== undefined) dbUpdates.end_timestamp = updates.endTimestamp;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('sessions')
       .update(dbUpdates)
-      .eq('session_id', sessionId);
+      .eq('session_id', sessionId)
+      .select();
 
     if (error) {
-      console.error('Error updating session in cloud:', error);
+      console.error('[Cloud] ❌ Error updating session:', error.message);
       return false;
     }
+    console.log('[Cloud] ✅ Session updated:', data);
     return true;
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.error('[Cloud] ❌ Exception updating session:', err);
     return false;
   }
 }
@@ -250,18 +262,22 @@ export async function cloudDeleteSession(sessionId: string): Promise<boolean> {
 export async function cloudSaveRound(round: Round): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
 
+  console.log('[Cloud] Saving round:', round.sessionId, 'round', round.roundIndex);
+  
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('rounds')
-      .upsert(roundToDb(round), { onConflict: 'session_id,round_index' });
+      .upsert(roundToDb(round), { onConflict: 'session_id,round_index' })
+      .select();
 
     if (error) {
-      console.error('Error saving round to cloud:', error);
+      console.error('[Cloud] ❌ Error saving round:', error.message, error.details);
       return false;
     }
+    console.log('[Cloud] ✅ Round saved:', data);
     return true;
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.error('[Cloud] ❌ Exception saving round:', err);
     return false;
   }
 }
@@ -293,6 +309,8 @@ export async function cloudGetRoundsForSession(sessionId: string): Promise<Round
 export async function cloudSaveMovementBatch(movements: MovementSample[]): Promise<boolean> {
   if (!isSupabaseConfigured() || movements.length === 0) return false;
 
+  console.log('[Cloud] Saving movements batch:', movements.length, 'samples');
+  
   try {
     const dbMovements = movements.map(movementToDb);
     
@@ -302,13 +320,14 @@ export async function cloudSaveMovementBatch(movements: MovementSample[]): Promi
       const batch = dbMovements.slice(i, i + batchSize);
       const { error } = await supabase.from('movements').insert(batch);
       if (error) {
-        console.error('Error saving movements to cloud:', error);
+        console.error('[Cloud] ❌ Error saving movements batch:', error.message);
         return false;
       }
     }
+    console.log('[Cloud] ✅ All movements saved');
     return true;
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.error('[Cloud] ❌ Exception saving movements:', err);
     return false;
   }
 }
@@ -341,17 +360,20 @@ export async function cloudGetMovementsForSession(sessionId: string): Promise<Mo
 export async function cloudSaveEventBatch(events: GameEvent[]): Promise<boolean> {
   if (!isSupabaseConfigured() || events.length === 0) return false;
 
+  console.log('[Cloud] Saving events batch:', events.length, 'events');
+  
   try {
     const dbEvents = events.map(eventToDb);
     const { error } = await supabase.from('events').insert(dbEvents);
 
     if (error) {
-      console.error('Error saving events to cloud:', error);
+      console.error('[Cloud] ❌ Error saving events:', error.message);
       return false;
     }
+    console.log('[Cloud] ✅ All events saved');
     return true;
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.error('[Cloud] ❌ Exception saving events:', err);
     return false;
   }
 }

@@ -212,57 +212,60 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
       {showDebug && (
         <div style={{ 
           background: '#1a1a2e', 
-          border: '1px solid #333', 
+          border: '1px solid #444', 
           borderRadius: '8px', 
           padding: '16px', 
           margin: '16px 0',
           fontFamily: 'monospace',
-          fontSize: '14px'
+          fontSize: '14px',
+          color: '#e6edf3'
         }}>
           <h3 style={{ margin: '0 0 12px 0', color: '#58a6ff' }}>🔧 Debug Panel</h3>
-          <div style={{ marginBottom: '12px' }}>
-            <strong>Supabase Configured:</strong> {isSupabaseConfigured() ? '✅ Yes' : '❌ No'}
+          <div style={{ marginBottom: '12px', color: '#e6edf3' }}>
+            <strong style={{ color: '#f0f6fc' }}>Supabase Configured:</strong> {isSupabaseConfigured() ? '✅ Yes' : '❌ No'}
           </div>
-          <div style={{ marginBottom: '12px' }}>
-            <strong>Data Source:</strong> {dataSource === 'cloud' ? '☁️ Cloud' : '💾 Local'}
+          <div style={{ marginBottom: '12px', color: '#e6edf3' }}>
+            <strong style={{ color: '#f0f6fc' }}>Data Source:</strong> {dataSource === 'cloud' ? '☁️ Cloud' : '💾 Local'}
           </div>
-          <div style={{ marginBottom: '12px' }}>
-            <strong>Sessions Loaded:</strong> {sessions.length}
+          <div style={{ marginBottom: '12px', color: '#e6edf3' }}>
+            <strong style={{ color: '#f0f6fc' }}>Sessions Loaded:</strong> {sessions.length}
           </div>
-          <button 
-            onClick={handleTestConnection}
-            style={{
-              background: '#238636',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              marginRight: '8px'
-            }}
-          >
-            Test Supabase Connection
-          </button>
-          <button 
-            onClick={loadSessions}
-            style={{
-              background: '#1f6feb',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            Reload Sessions
-          </button>
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button 
+              onClick={handleTestConnection}
+              style={{
+                background: '#238636',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Test Connection
+            </button>
+            <button 
+              onClick={loadSessions}
+              style={{
+                background: '#1f6feb',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Reload Sessions
+            </button>
+          </div>
           {debugInfo && (
             <div style={{ 
               marginTop: '12px', 
               padding: '12px', 
               background: '#0d1117', 
               borderRadius: '4px',
-              whiteSpace: 'pre-wrap'
+              whiteSpace: 'pre-wrap',
+              color: '#e6edf3'
             }}>
               {debugInfo}
             </div>
