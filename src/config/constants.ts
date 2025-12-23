@@ -38,7 +38,7 @@ export const REWARD_SOUND_DURATION = 200;  // milliseconds
 export const REWARD_SOUND_VOLUME = 0.3;    // 0.0 to 1.0
 
 // ============ ADMIN SETTINGS ============
-export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'elay-guez-1334';
+export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'kinneret-lab-1234';
 export const SESSION_TIMEOUT = 3600000;    // ms, 1 hour (for incomplete session detection)
 export const EXPORT_BATCH_SIZE = 1000;     // rows per CSV chunk (for large exports)
 
