@@ -307,24 +307,45 @@ export async function cloudGetRoundsForSession(sessionId: string): Promise<Round
 // ============ MOVEMENT OPERATIONS ============
 
 export async function cloudSaveMovementBatch(movements: MovementSample[]): Promise<boolean> {
-  if (!isSupabaseConfigured() || movements.length === 0) return false;
+  console.log('[Cloud] cloudSaveMovementBatch called with', movements.length, 'movements');
+  
+  if (!isSupabaseConfigured()) {
+    console.warn('[Cloud] Supabase not configured for movements');
+    return false;
+  }
+  
+  if (movements.length === 0) {
+    console.warn('[Cloud] No movements to save');
+    return false;
+  }
 
   console.log('[Cloud] Saving movements batch:', movements.length, 'samples');
+  console.log('[Cloud] Sample movement:', movements[0]);
   
   try {
     const dbMovements = movements.map(movementToDb);
+    console.log('[Cloud] Converted to DB format. Sample:', dbMovements[0]);
     
-    // Insert in batches of 1000 to avoid payload limits
-    const batchSize = 1000;
+    // Insert in batches of 500 to avoid payload limits (reduced from 1000)
+    const batchSize = 500;
+    let totalSaved = 0;
+    
     for (let i = 0; i < dbMovements.length; i += batchSize) {
       const batch = dbMovements.slice(i, i + batchSize);
-      const { error } = await supabase.from('movements').insert(batch);
+      console.log(`[Cloud] Inserting batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(dbMovements.length/batchSize)} (${batch.length} items)`);
+      
+      const { data, error } = await supabase.from('movements').insert(batch).select('id');
+      
       if (error) {
-        console.error('[Cloud] ❌ Error saving movements batch:', error.message);
+        console.error('[Cloud] ❌ Error saving movements batch:', error.message, error.details, error.hint, error.code);
         return false;
       }
+      
+      totalSaved += batch.length;
+      console.log(`[Cloud] Batch saved. Total so far: ${totalSaved}`);
     }
-    console.log('[Cloud] ✅ All movements saved');
+    
+    console.log('[Cloud] ✅ All movements saved:', totalSaved);
     return true;
   } catch (err) {
     console.error('[Cloud] ❌ Exception saving movements:', err);
@@ -335,6 +356,8 @@ export async function cloudSaveMovementBatch(movements: MovementSample[]): Promi
 export async function cloudGetMovementsForSession(sessionId: string): Promise<MovementSample[]> {
   if (!isSupabaseConfigured()) return [];
 
+  console.log('[Cloud] Fetching movements for session:', sessionId);
+  
   try {
     const { data, error } = await supabase
       .from('movements')
@@ -344,13 +367,14 @@ export async function cloudGetMovementsForSession(sessionId: string): Promise<Mo
       .order('timestamp_ms');
 
     if (error) {
-      console.error('Error fetching movements from cloud:', error);
+      console.error('[Cloud] ❌ Error fetching movements:', error.message);
       return [];
     }
 
+    console.log('[Cloud] ✅ Movements fetched:', data?.length || 0);
     return (data || []).map(dbToMovement);
   } catch (err) {
-    console.error('Cloud fetch error:', err);
+    console.error('[Cloud] ❌ Exception fetching movements:', err);
     return [];
   }
 }

@@ -204,9 +204,16 @@ function App() {
         setAllEvents(events);
         
         // Sync to cloud - complete session with all data
-        cloudUpdateSession(sessionId, { status: 'complete', endTimestamp: endTime });
-        cloudSaveMovementBatch(movements);
-        cloudSaveEventBatch(events);
+        console.log('[App] Syncing complete session to cloud...');
+        console.log('[App] Movements to sync:', movements.length);
+        console.log('[App] Events to sync:', events.length);
+        
+        cloudUpdateSession(sessionId, { status: 'complete', endTimestamp: endTime })
+          .then(ok => console.log('[App] Session update:', ok ? '✅' : '❌'));
+        cloudSaveMovementBatch(movements)
+          .then(ok => console.log('[App] Movements sync:', ok ? '✅' : '❌'));
+        cloudSaveEventBatch(events)
+          .then(ok => console.log('[App] Events sync:', ok ? '✅' : '❌'));
         
         // Update session object
         setSession(prev => prev ? { ...prev, status: 'complete', endTimestamp: endTime } : null);
