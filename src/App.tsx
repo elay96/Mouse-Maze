@@ -11,7 +11,9 @@ import {
   deleteSession,
   getSessionByParticipant,
   getMovementsForSession,
+  getMovementsForRound,
   getEventsForSession,
+  getEventsForRound,
   getRoundsForSession,
   getParticipantProfile,
   saveParticipantProfile
@@ -180,8 +182,24 @@ function App() {
       });
       
       // Sync round to cloud
-      cloudSaveRound(round);
+      cloudSaveRound(round).then(ok => console.log('[App] Round sync:', ok ? '✅' : '❌'));
       cloudUpdateSession(sessionId, { roundsCompleted: newRounds.length });
+      
+      // Sync movements and events for this round immediately
+      const roundMovements = await getMovementsForRound(sessionId, round.roundIndex);
+      const roundEvents = await getEventsForRound(sessionId, round.roundIndex);
+      console.log(`[App] Round ${round.roundIndex} - Movements: ${roundMovements.length}, Events: ${roundEvents.length}`);
+      
+      if (roundMovements.length > 0) {
+        cloudSaveMovementBatch(roundMovements).then(ok => 
+          console.log(`[App] Round ${round.roundIndex} movements sync:`, ok ? '✅' : '❌')
+        );
+      }
+      if (roundEvents.length > 0) {
+        cloudSaveEventBatch(roundEvents).then(ok => 
+          console.log(`[App] Round ${round.roundIndex} events sync:`, ok ? '✅' : '❌')
+        );
+      }
     }
 
     // Check if more rounds - go directly to next round (no transition screen needed)
