@@ -16,6 +16,13 @@ import {
   getParticipantProfile,
   saveParticipantProfile
 } from './utils/database';
+import { 
+  cloudCreateSession, 
+  cloudUpdateSession,
+  cloudSaveRound,
+  cloudSaveMovementBatch,
+  cloudSaveEventBatch
+} from './utils/cloudDatabase';
 import { assignCondition } from './utils/conditionGenerator';
 
 import { Landing, type ParticipantInfo } from './components/Landing';
@@ -139,6 +146,9 @@ function App() {
 
       await createSession(newSession);
       
+      // Also sync to cloud
+      cloudCreateSession(newSession);
+      
       setSessionId(newSessionId);
       setSession(newSession);
       setCurrentRound(0);
@@ -157,11 +167,15 @@ function App() {
     const newRounds = [...completedRounds, round];
     setCompletedRounds(newRounds);
 
-    // Update session
+    // Update session locally
     if (sessionId) {
       await updateSession(sessionId, {
         roundsCompleted: newRounds.length
       });
+      
+      // Sync round to cloud
+      cloudSaveRound(round);
+      cloudUpdateSession(sessionId, { roundsCompleted: newRounds.length });
     }
 
     // Check if more rounds - go directly to next round (no transition screen needed)
@@ -171,9 +185,10 @@ function App() {
     } else {
       // All rounds complete
       if (sessionId) {
+        const endTime = new Date().toISOString();
         await updateSession(sessionId, {
           status: 'complete',
-          endTimestamp: new Date().toISOString()
+          endTimestamp: endTime
         });
 
         // Load all data for completion screen
@@ -182,8 +197,13 @@ function App() {
         setAllMovements(movements);
         setAllEvents(events);
         
+        // Sync to cloud - complete session with all data
+        cloudUpdateSession(sessionId, { status: 'complete', endTimestamp: endTime });
+        cloudSaveMovementBatch(movements);
+        cloudSaveEventBatch(events);
+        
         // Update session object
-        setSession(prev => prev ? { ...prev, status: 'complete', endTimestamp: new Date().toISOString() } : null);
+        setSession(prev => prev ? { ...prev, status: 'complete', endTimestamp: endTime } : null);
       }
       setScreen('completion');
     }

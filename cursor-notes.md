@@ -764,7 +764,42 @@ src/
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-12-22  
-**Status:** Ready for implementation
+## Cloud Database Setup (Supabase)
+
+כדי לשמור סשנים בענן ולאפשר לאדמין לראות נתונים מכל המשתתפים:
+
+### שלב 1: יצירת פרויקט Supabase
+1. היכנס ל-https://supabase.com והירשם (חינמי)
+2. צור פרויקט חדש
+3. המתן לסיום ההגדרה (~2 דקות)
+
+### שלב 2: יצירת הטבלאות
+1. בפאנל השמאלי, לחץ על **SQL Editor**
+2. העתק את התוכן מקובץ `supabase-schema.sql`
+3. הפעל את ה-SQL (לחץ Run)
+
+### שלב 3: הגדרת משתני סביבה
+1. בפאנל השמאלי, לחץ על **Settings** → **API**
+2. העתק את:
+   - **Project URL** → `VITE_SUPABASE_URL`
+   - **anon public key** → `VITE_SUPABASE_ANON_KEY`
+
+3. ב-Vercel:
+   - Project Settings → Environment Variables
+   - הוסף את שני המשתנים:
+     - `VITE_SUPABASE_URL` = הURL שהעתקת
+     - `VITE_SUPABASE_ANON_KEY` = המפתח שהעתקת
+   
+4. עשה Redeploy לפרויקט
+
+### שלב 4: אימות
+1. היכנס לאתר כמשתתף, השלם סשן
+2. היכנס לאדמין - אמור לראות את הסשן
+3. בדאשבורד תראה ☁️ Cloud DB אם ה-Supabase מחובר
+
+---
+
+**Document Version:** 1.1  
+**Last Updated:** 2025-12-23  
+**Status:** Production ready with cloud database support
 

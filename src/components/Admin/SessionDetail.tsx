@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Session, Round, MovementSample, GameEvent, RoundStats } from '../../types/schema';
 import { hasParticipantProfile } from '../../types/schema';
+import { isSupabaseConfigured } from '../../config/supabase';
+import { cloudGetFullSessionData } from '../../utils/cloudDatabase';
 import { getFullSessionData } from '../../utils/database';
 import { calculateRoundStats } from '../../utils/statsCalculator';
 import { exportSessionJSON, exportMovementsCSV, exportEventsCSV, exportRoundSummaryCSV } from '../../utils/exportUtils';
@@ -31,6 +33,21 @@ export function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
 
   const loadSessionData = async () => {
     setIsLoading(true);
+    
+    // Try cloud first if configured
+    if (isSupabaseConfigured()) {
+      const cloudData = await cloudGetFullSessionData(sessionId);
+      if (cloudData) {
+        setSession(cloudData.session);
+        setRounds(cloudData.rounds);
+        setMovements(cloudData.movements);
+        setEvents(cloudData.events);
+        setIsLoading(false);
+        return;
+      }
+    }
+    
+    // Fallback to local IndexedDB
     const data = await getFullSessionData(sessionId);
     if (data) {
       setSession(data.session);

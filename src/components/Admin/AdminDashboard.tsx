@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Session } from '../../types/schema';
 import { hasParticipantProfile } from '../../types/schema';
 import type { Condition } from '../../config/constants';
+import { isSupabaseConfigured } from '../../config/supabase';
+import { cloudGetAllSessions, cloudDeleteSession } from '../../utils/cloudDatabase';
 import { getAllSessions, deleteSession } from '../../utils/database';
 import { exportAllSessionsCSV } from '../../utils/exportUtils';
 import styles from './AdminDashboard.module.css';
@@ -19,6 +21,7 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
   const [searchQuery, setSearchQuery] = useState('');
   const [conditionFilter, setConditionFilter] = useState<Condition | 'ALL'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'rewards'>('date');
+  const [dataSource, setDataSource] = useState<'cloud' | 'local'>('cloud');
 
   useEffect(() => {
     loadSessions();
@@ -26,8 +29,22 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
 
   const loadSessions = async () => {
     setIsLoading(true);
-    const allSessions = await getAllSessions();
-    setSessions(allSessions);
+    
+    // Try cloud first if configured
+    if (isSupabaseConfigured()) {
+      const cloudSessions = await cloudGetAllSessions();
+      if (cloudSessions.length > 0) {
+        setSessions(cloudSessions);
+        setDataSource('cloud');
+        setIsLoading(false);
+        return;
+      }
+    }
+    
+    // Fallback to local IndexedDB
+    const localSessions = await getAllSessions();
+    setSessions(localSessions);
+    setDataSource('local');
     setIsLoading(false);
   };
 
@@ -72,6 +89,10 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
   const handleDelete = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this session? This cannot be undone.')) {
+      // Delete from both cloud and local
+      if (isSupabaseConfigured()) {
+        await cloudDeleteSession(sessionId);
+      }
       await deleteSession(sessionId);
       await loadSessions();
     }
@@ -157,6 +178,12 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
         <div className={styles.stat}>
           <span className={styles.statValue} data-status="complete">{stats.complete}</span>
           <span className={styles.statLabel}>Complete</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statValue} data-source={dataSource}>
+            {dataSource === 'cloud' ? '☁️' : '💾'}
+          </span>
+          <span className={styles.statLabel}>{dataSource === 'cloud' ? 'Cloud DB' : 'Local DB'}</span>
         </div>
       </div>
 
