@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Session } from '../../types/schema';
 import { hasParticipantProfile } from '../../types/schema';
 import type { Condition } from '../../config/constants';
-import { isSupabaseConfigured } from '../../config/supabase';
+import { isSupabaseConfigured, testSupabaseConnection } from '../../config/supabase';
 import { cloudGetAllSessions, cloudDeleteSession } from '../../utils/cloudDatabase';
 import { getAllSessions, deleteSession } from '../../utils/database';
 import { exportAllSessionsCSV } from '../../utils/exportUtils';
@@ -22,26 +22,44 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
   const [conditionFilter, setConditionFilter] = useState<Condition | 'ALL'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'participant' | 'rewards'>('date');
   const [dataSource, setDataSource] = useState<'cloud' | 'local'>('cloud');
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     loadSessions();
   }, []);
 
+  const handleTestConnection = async () => {
+    setDebugInfo('Testing connection...');
+    const result = await testSupabaseConnection();
+    if (result.success) {
+      setDebugInfo('✅ Connection successful! Supabase is working.');
+    } else {
+      setDebugInfo(`❌ Connection failed: ${result.error}`);
+    }
+  };
+
   const loadSessions = async () => {
     setIsLoading(true);
     
+    const isConfigured = isSupabaseConfigured();
+    console.log('[AdminDashboard] Supabase configured:', isConfigured);
+    
     // Try cloud first if configured
-    if (isSupabaseConfigured()) {
+    if (isConfigured) {
+      console.log('[AdminDashboard] Trying to fetch from cloud...');
       const cloudSessions = await cloudGetAllSessions();
-      if (cloudSessions.length > 0) {
-        setSessions(cloudSessions);
-        setDataSource('cloud');
-        setIsLoading(false);
-        return;
-      }
+      console.log('[AdminDashboard] Cloud sessions received:', cloudSessions.length);
+      
+      // Even if empty, if Supabase is configured, use cloud as source
+      setSessions(cloudSessions);
+      setDataSource('cloud');
+      setIsLoading(false);
+      return;
     }
     
     // Fallback to local IndexedDB
+    console.log('[AdminDashboard] Falling back to local IndexedDB');
     const localSessions = await getAllSessions();
     setSessions(localSessions);
     setDataSource('local');
@@ -185,7 +203,75 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
           </span>
           <span className={styles.statLabel}>{dataSource === 'cloud' ? 'Cloud DB' : 'Local DB'}</span>
         </div>
+        <div className={styles.stat} style={{ cursor: 'pointer' }} onClick={() => setShowDebug(!showDebug)}>
+          <span className={styles.statValue}>🔧</span>
+          <span className={styles.statLabel}>Debug</span>
+        </div>
       </div>
+
+      {showDebug && (
+        <div style={{ 
+          background: '#1a1a2e', 
+          border: '1px solid #333', 
+          borderRadius: '8px', 
+          padding: '16px', 
+          margin: '16px 0',
+          fontFamily: 'monospace',
+          fontSize: '14px'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', color: '#58a6ff' }}>🔧 Debug Panel</h3>
+          <div style={{ marginBottom: '12px' }}>
+            <strong>Supabase Configured:</strong> {isSupabaseConfigured() ? '✅ Yes' : '❌ No'}
+          </div>
+          <div style={{ marginBottom: '12px' }}>
+            <strong>Data Source:</strong> {dataSource === 'cloud' ? '☁️ Cloud' : '💾 Local'}
+          </div>
+          <div style={{ marginBottom: '12px' }}>
+            <strong>Sessions Loaded:</strong> {sessions.length}
+          </div>
+          <button 
+            onClick={handleTestConnection}
+            style={{
+              background: '#238636',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              marginRight: '8px'
+            }}
+          >
+            Test Supabase Connection
+          </button>
+          <button 
+            onClick={loadSessions}
+            style={{
+              background: '#1f6feb',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Reload Sessions
+          </button>
+          {debugInfo && (
+            <div style={{ 
+              marginTop: '12px', 
+              padding: '12px', 
+              background: '#0d1117', 
+              borderRadius: '4px',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {debugInfo}
+            </div>
+          )}
+          <div style={{ marginTop: '12px', color: '#8b949e', fontSize: '12px' }}>
+            💡 Open browser console (F12) for detailed logs
+          </div>
+        </div>
+      )}
 
       <div className={styles.controls}>
         <div className={styles.searchWrapper}>

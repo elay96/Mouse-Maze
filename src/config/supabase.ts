@@ -7,13 +7,39 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Debug logging
+console.log('[Supabase] URL configured:', SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'NOT SET');
+console.log('[Supabase] Key configured:', SUPABASE_ANON_KEY ? 'YES (length: ' + SUPABASE_ANON_KEY.length + ')' : 'NOT SET');
+
 // Check if Supabase is configured
 export const isSupabaseConfigured = () => {
-  return SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+  const configured = SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+  console.log('[Supabase] isSupabaseConfigured:', configured);
+  return configured;
 };
 
 // Create Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Test connection function
+export async function testSupabaseConnection(): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, error: 'Supabase not configured - missing URL or Key' };
+  }
+  
+  try {
+    const { data, error } = await supabase.from('sessions').select('count').limit(1);
+    if (error) {
+      console.error('[Supabase] Connection test failed:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[Supabase] Connection test SUCCESS');
+    return { success: true };
+  } catch (err) {
+    console.error('[Supabase] Connection test exception:', err);
+    return { success: false, error: String(err) };
+  }
+}
 
 // Database types for Supabase
 export interface DbSession {
