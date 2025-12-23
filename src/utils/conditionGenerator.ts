@@ -331,7 +331,10 @@ export function generateRoundLayout(condition: Condition, seed: string): RoundLa
  */
 export function assignCondition(): Condition {
   // Use crypto for true randomness
+  // Generate a random number and use it to make a true 50/50 decision
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  return array[0] % 2 === 0 ? 'CLUSTER' : 'NOISE';
+  // Convert to 0-1 range and use threshold for true 50/50 split
+  const randomValue = array[0] / (0xFFFFFFFF + 1); // Normalize to [0, 1)
+  return randomValue < 0.5 ? 'CLUSTER' : 'NOISE';
 }
