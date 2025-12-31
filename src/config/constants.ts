@@ -41,7 +41,7 @@ export const MAZE_WALL_THICKNESS = 20;     // pixels
 export const MAZE_TARGET_SIZE = 50;        // pixels, red target square
 export const MAZE_START_X = 100;           // agent start X in maze (bottom-left)
 export const MAZE_START_Y = CANVAS_SIZE - 100; // agent start Y in maze (bottom-left)
-export const MAZE_TARGET_X = 100;          // target X in maze (top-left area)
+export const MAZE_TARGET_X = CANVAS_SIZE - 100 - MAZE_TARGET_SIZE; // target X in maze (top-right area)
 export const MAZE_TARGET_Y = 100;          // target Y in maze (top-left area)
 
 // ============ VISUAL COLORS (NetLogo Style) ============

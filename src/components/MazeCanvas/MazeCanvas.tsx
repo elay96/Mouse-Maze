@@ -3,7 +3,7 @@
 // Agent resets to start position on wall collision
 
 import { useRef, useEffect, useCallback, useState } from 'react';
-import type { AgentState, GameEvent } from '../../types/schema';
+import type { AgentState, GameEvent, Position } from '../../types/schema';
 import {
   CANVAS_SIZE,
   CANVAS_BACKGROUND,
@@ -67,13 +67,16 @@ export function MazeCanvas({
 }: MazeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isStarted, setIsStarted] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false); // Use state instead of ref for proper re-renders
   const [collisionCount, setCollisionCount] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
   const [walls] = useState<Wall[]>(generateMazeWalls);
   
   const mazeStartTimeRef = useRef<number>(0);
-  const isCompletedRef = useRef<boolean>(false);
   const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
+  
+  // Ref to store resetAgent function - breaks circular dependency
+  const resetAgentRef = useRef<((position?: Position, heading?: number) => void) | null>(null);
 
   // Check if agent collides with any wall
   const checkWallCollision = useCallback((agent: AgentState): boolean => {
@@ -107,12 +110,12 @@ export function MazeCanvas({
     return distance < (MAZE_TARGET_SIZE / 2 + AGENT_SIZE * 0.4);
   }, []);
 
-  // Handle position updates
+  // Handle position updates - uses ref to call resetAgent to avoid circular dependency
   const handlePositionUpdate = useCallback((agent: AgentState) => {
     // Update agentRef for smooth canvas rendering
     agentRef.current = agent;
     
-    if (!isStarted || isCompletedRef.current) return;
+    if (!isStarted || isCompleted) return;
     
     // Check wall collision (point-based)
     if (checkWallCollision(agent)) {
@@ -132,14 +135,16 @@ export function MazeCanvas({
       };
       saveEvent(event).catch(console.error);
       
-      // Reset agent position
-      resetAgent({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
+      // Reset agent position using ref (breaks circular dependency)
+      if (resetAgentRef.current) {
+        resetAgentRef.current({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
+      }
       return;
     }
     
     // Check target reached
     if (checkTargetReached(agent)) {
-      isCompletedRef.current = true;
+      setIsCompleted(true); // Use state setter for proper re-render
       
       // Log completion event
       const event: GameEvent = {
@@ -158,7 +163,7 @@ export function MazeCanvas({
       // Notify parent
       onComplete();
     }
-  }, [isStarted, sessionId, checkWallCollision, checkTargetReached, onComplete]);
+  }, [isStarted, isCompleted, sessionId, checkWallCollision, checkTargetReached, onComplete]);
 
   // Agent physics (no-op sample batch for maze phase)
   const handleSampleBatch = useCallback(() => {}, []);
@@ -170,7 +175,7 @@ export function MazeCanvas({
     participantId,
     condition: 'DIFFUSE', // Placeholder - not used in maze
     roundIndex: -1,
-    isActive: isStarted && !isCompletedRef.current,
+    isActive: isStarted && !isCompleted, // Now uses state, will properly stop when completed
     roundStartTime: mazeStartTimeRef.current,
     onSampleBatch: handleSampleBatch,
     onPositionUpdate: handlePositionUpdate,
@@ -179,6 +184,11 @@ export function MazeCanvas({
     wrapBoundaries: false
   });
 
+  // Keep resetAgentRef updated with the latest resetAgent function
+  useEffect(() => {
+    resetAgentRef.current = resetAgent;
+  }, [resetAgent]);
+
   // Canvas rendering
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -186,6 +196,8 @@ export function MazeCanvas({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    let animationId: number;
 
     const draw = () => {
       // Black background
@@ -220,17 +232,17 @@ export function MazeCanvas({
         ctx.restore();
       }
 
-      if (!isCompletedRef.current) {
-        requestAnimationFrame(draw);
+      if (!isCompleted) {
+        animationId = requestAnimationFrame(draw);
       }
     };
 
-    const animationId = requestAnimationFrame(draw);
+    animationId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [walls, isStarted]);
+  }, [walls, isStarted, isCompleted]);
 
   // Start handler
   const handleStart = useCallback(() => {
@@ -322,4 +334,3 @@ export function MazeCanvas({
     </div>
   );
 }
-
