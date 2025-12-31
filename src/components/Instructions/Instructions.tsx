@@ -1,5 +1,6 @@
 // Instructions Screen - NetLogo Spatial Foraging Adaptation
 
+import { useEffect } from 'react';
 import type { Condition } from '../../config/constants';
 import { N_ROUNDS, N_REWARDS } from '../../config/constants';
 import styles from './Instructions.module.css';
@@ -11,6 +12,19 @@ interface InstructionsProps {
 }
 
 export function Instructions({ participantId, condition, onStart }: InstructionsProps) {
+  // Allow pressing Enter to start
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        onStart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onStart]);
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>

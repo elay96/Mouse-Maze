@@ -74,6 +74,8 @@ export function MazeCanvas({
   
   const mazeStartTimeRef = useRef<number>(0);
   const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
+  const lastCollisionTimeRef = useRef<number>(0); // Track last collision time for cooldown
+  const collisionCooldown = 500; // ms - prevent multiple collisions in quick succession
   
   // Ref to store resetAgent function - breaks circular dependency
   const resetAgentRef = useRef<((position?: Position, heading?: number) => void) | null>(null);
@@ -117,8 +119,15 @@ export function MazeCanvas({
     
     if (!isStarted || isCompleted) return;
     
-    // Check wall collision (point-based)
-    if (checkWallCollision(agent)) {
+    // Check wall collision (point-based) with cooldown to prevent multiple rapid collisions
+    const now = performance.now();
+    const timeSinceLastCollision = now - lastCollisionTimeRef.current;
+    
+    if (checkWallCollision(agent) && timeSinceLastCollision > collisionCooldown) {
+      // Update collision time immediately to prevent multiple counts
+      lastCollisionTimeRef.current = now;
+      
+      // Increment collision count by exactly 1
       setCollisionCount(prev => prev + 1);
       
       // Log collision event
@@ -126,7 +135,7 @@ export function MazeCanvas({
         sessionId,
         roundIndex: -1, // Maze phase
         eventType: 'maze_collision',
-        timestampMs: Math.round(performance.now() - mazeStartTimeRef.current),
+        timestampMs: Math.round(now - mazeStartTimeRef.current),
         timestampAbs: new Date().toISOString(),
         metadata: {
           agentPosition: { x: agent.x, y: agent.y },
@@ -261,6 +270,21 @@ export function MazeCanvas({
     };
     saveEvent(event).catch(console.error);
   }, [sessionId]);
+
+  // Allow pressing Enter to start when instructions are shown
+  useEffect(() => {
+    if (!showInstructions) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleStart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showInstructions, handleStart]);
 
   return (
     <div className={styles.container}>

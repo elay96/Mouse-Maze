@@ -443,6 +443,22 @@ export function GameCanvas({
     setStartCountdown(START_COUNTDOWN_SECONDS);
   }, []);
 
+  // Allow pressing Enter to start when overlay is shown
+  useEffect(() => {
+    // Only listen when the "Start Round" overlay is visible
+    if (isStarted || isRoundEnded || startCountdown !== null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleStart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isStarted, isRoundEnded, startCountdown, handleStart]);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
