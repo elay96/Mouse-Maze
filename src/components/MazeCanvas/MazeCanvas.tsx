@@ -74,8 +74,7 @@ export function MazeCanvas({
   
   const mazeStartTimeRef = useRef<number>(0);
   const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
-  const lastCollisionTimeRef = useRef<number>(0); // Track last collision time for cooldown
-  const collisionCooldown = 500; // ms - prevent multiple collisions in quick succession
+  const isInCollisionRef = useRef<boolean>(false); // Track if currently in collision state
   
   // Ref to store resetAgent function - breaks circular dependency
   const resetAgentRef = useRef<((position?: Position, heading?: number) => void) | null>(null);
@@ -114,16 +113,22 @@ export function MazeCanvas({
 
   // Handle position updates - uses ref to call resetAgent to avoid circular dependency
   const handlePositionUpdate = useCallback((agent: AgentState) => {
+    // Always update agentRef for smooth canvas rendering
+    agentRef.current = agent;
+    
     if (!isStarted || isCompleted) return;
     
-    // Check wall collision (point-based) with cooldown to prevent multiple rapid collisions
-    const now = performance.now();
-    const timeSinceLastCollision = now - lastCollisionTimeRef.current;
+    const isCurrentlyInWall = checkWallCollision(agent);
     
-    // Check for collision (only count if cooldown has elapsed)
-    if (checkWallCollision(agent) && timeSinceLastCollision > collisionCooldown) {
-      // Update collision time immediately to prevent multiple counts
-      lastCollisionTimeRef.current = now;
+    // If agent was in collision and is now clear, reset the flag
+    if (isInCollisionRef.current && !isCurrentlyInWall) {
+      isInCollisionRef.current = false;
+    }
+    
+    // Detect NEW collision (only if not already in collision state)
+    if (isCurrentlyInWall && !isInCollisionRef.current) {
+      // Mark as in collision to prevent multiple counts
+      isInCollisionRef.current = true;
       
       // Increment collision count by exactly 1
       setCollisionCount(prev => prev + 1);
@@ -133,7 +138,7 @@ export function MazeCanvas({
         sessionId,
         roundIndex: -1, // Maze phase
         eventType: 'maze_collision',
-        timestampMs: Math.round(now - mazeStartTimeRef.current),
+        timestampMs: Math.round(performance.now() - mazeStartTimeRef.current),
         timestampAbs: new Date().toISOString(),
         metadata: {
           agentPosition: { x: agent.x, y: agent.y },
@@ -142,15 +147,15 @@ export function MazeCanvas({
       };
       saveEvent(event).catch(console.error);
       
-      // Reset agent position using physics hook
+      // Reset agent position - update local ref immediately
+      agentRef.current = { x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: agent.velocity };
+      
+      // Reset the physics hook state
       if (resetAgentRef.current) {
         resetAgentRef.current({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
       }
       return;
     }
-    
-    // Update agentRef for smooth canvas rendering
-    agentRef.current = agent;
     
     // Check target reached
     if (checkTargetReached(agent)) {
