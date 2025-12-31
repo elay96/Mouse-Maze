@@ -3,7 +3,7 @@
 // Agent resets to start position on wall collision
 
 import { useRef, useEffect, useCallback, useState } from 'react';
-import type { AgentState, GameEvent, Position } from '../../types/schema';
+import type { AgentState, GameEvent } from '../../types/schema';
 import {
   CANVAS_SIZE,
   CANVAS_BACKGROUND,
@@ -35,50 +35,6 @@ interface Wall {
   y: number;
   width: number;
   height: number;
-}
-
-// Check if a line segment intersects with a rectangle (wall)
-// Uses parametric line equation and checks intersection with all 4 edges
-function lineIntersectsRect(
-  x1: number, y1: number, x2: number, y2: number,
-  rx: number, ry: number, rw: number, rh: number
-): boolean {
-  // Check if line segment intersects any of the 4 edges of the rectangle
-  const left = rx;
-  const right = rx + rw;
-  const top = ry;
-  const bottom = ry + rh;
-
-  // Check intersection with each edge
-  if (lineIntersectsLine(x1, y1, x2, y2, left, top, right, top)) return true;    // Top edge
-  if (lineIntersectsLine(x1, y1, x2, y2, left, bottom, right, bottom)) return true; // Bottom edge
-  if (lineIntersectsLine(x1, y1, x2, y2, left, top, left, bottom)) return true;  // Left edge
-  if (lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom)) return true; // Right edge
-
-  // Also check if either endpoint is inside the rectangle
-  if (pointInRect(x1, y1, rx, ry, rw, rh)) return true;
-  if (pointInRect(x2, y2, rx, ry, rw, rh)) return true;
-
-  return false;
-}
-
-// Check if two line segments intersect
-function lineIntersectsLine(
-  x1: number, y1: number, x2: number, y2: number,
-  x3: number, y3: number, x4: number, y4: number
-): boolean {
-  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-  if (Math.abs(denom) < 0.0001) return false; // Lines are parallel
-
-  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-
-  return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
-}
-
-// Check if a point is inside a rectangle
-function pointInRect(px: number, py: number, rx: number, ry: number, rw: number, rh: number): boolean {
-  return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
 }
 
 // Generate a simple slalom maze layout
@@ -118,9 +74,8 @@ export function MazeCanvas({
   const mazeStartTimeRef = useRef<number>(0);
   const isCompletedRef = useRef<boolean>(false);
   const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
-  const prevPositionRef = useRef<Position>({ x: MAZE_START_X, y: MAZE_START_Y });
 
-  // Check if agent collides with any wall (point collision)
+  // Check if agent collides with any wall
   const checkWallCollision = useCallback((agent: AgentState): boolean => {
     const agentRadius = AGENT_SIZE * 0.6;
     
@@ -134,19 +89,6 @@ export function MazeCanvas({
       const distanceSquared = dx * dx + dy * dy;
       
       if (distanceSquared < agentRadius * agentRadius) {
-        return true;
-      }
-    }
-    return false;
-  }, [walls]);
-
-  // Check if the path from oldPos to newPos crosses any wall (prevents tunneling)
-  const checkPathCollision = useCallback((oldPos: Position, newPos: Position): boolean => {
-    for (const wall of walls) {
-      if (lineIntersectsRect(
-        oldPos.x, oldPos.y, newPos.x, newPos.y,
-        wall.x, wall.y, wall.width, wall.height
-      )) {
         return true;
       }
     }
@@ -172,15 +114,8 @@ export function MazeCanvas({
     
     if (!isStarted || isCompletedRef.current) return;
     
-    // Get previous position for path collision detection
-    const prevPos = prevPositionRef.current;
-    const newPos = { x: agent.x, y: agent.y };
-    
-    // Check wall collision: both point collision AND path collision (prevents tunneling)
-    const hasPointCollision = checkWallCollision(agent);
-    const hasPathCollision = checkPathCollision(prevPos, newPos);
-    
-    if (hasPointCollision || hasPathCollision) {
+    // Check wall collision (point-based)
+    if (checkWallCollision(agent)) {
       setCollisionCount(prev => prev + 1);
       
       // Log collision event
@@ -197,14 +132,10 @@ export function MazeCanvas({
       };
       saveEvent(event).catch(console.error);
       
-      // Reset agent position and update prev position ref
+      // Reset agent position
       resetAgent({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
-      prevPositionRef.current = { x: MAZE_START_X, y: MAZE_START_Y };
       return;
     }
-    
-    // Update previous position for next frame
-    prevPositionRef.current = newPos;
     
     // Check target reached
     if (checkTargetReached(agent)) {
@@ -227,7 +158,7 @@ export function MazeCanvas({
       // Notify parent
       onComplete();
     }
-  }, [isStarted, sessionId, checkWallCollision, checkPathCollision, checkTargetReached, onComplete]);
+  }, [isStarted, sessionId, checkWallCollision, checkTargetReached, onComplete]);
 
   // Agent physics (no-op sample batch for maze phase)
   const handleSampleBatch = useCallback(() => {}, []);
