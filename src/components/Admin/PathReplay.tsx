@@ -153,7 +153,19 @@ export const PathReplay = forwardRef<PathReplayHandle, PathReplayProps>(({ round
 
       ctx.moveTo(visibleMovements[0].x, visibleMovements[0].y);
       for (let i = 1; i < visibleMovements.length; i++) {
-        ctx.lineTo(visibleMovements[i].x, visibleMovements[i].y);
+        const prev = visibleMovements[i - 1];
+        const curr = visibleMovements[i];
+        const dx = Math.abs(curr.x - prev.x);
+        const dy = Math.abs(curr.y - prev.y);
+        
+        // If jump is too large (wrap-around), break the path instead of drawing a long line
+        if (dx > CANVAS_SIZE / 2 || dy > CANVAS_SIZE / 2) {
+          ctx.stroke(); // End current path segment
+          ctx.beginPath(); // Start new path segment
+          ctx.moveTo(curr.x, curr.y);
+        } else {
+          ctx.lineTo(curr.x, curr.y);
+        }
       }
       ctx.stroke();
     }
