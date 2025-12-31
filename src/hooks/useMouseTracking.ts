@@ -98,9 +98,11 @@ export function useMouseTracking({
         timestampAbs,
         x: Math.round(pos.x),
         y: Math.round(pos.y),
+        heading: 0, // Mouse tracking has no heading concept
         velocity: Math.round(velocity * 100) / 100,
         distanceFromLast: Math.round(distanceFromLast * 100) / 100,
-        acceleration: Math.round(acceleration * 100) / 100
+        acceleration: Math.round(acceleration * 100) / 100,
+        foodHere: false // Mouse tracking doesn't track this per sample
       };
 
       sampleBuffer.current.push(sample);

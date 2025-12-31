@@ -29,6 +29,15 @@ export class MouseMazeDB extends Dexie {
       events: '++id, sessionId, roundIndex, eventType, [sessionId+roundIndex]',
       participants: 'participantKey, fullName, assignedCondition, createdAt'
     });
+
+    // Version 3: NetLogo adaptation - add mazeCompleted to sessions, heading/foodHere to movements
+    this.version(3).stores({
+      sessions: 'sessionId, participantId, condition, startTimestamp, status, fullName, mazeCompleted',
+      rounds: '[sessionId+roundIndex], sessionId, condition',
+      movements: '++id, sessionId, roundIndex, [sessionId+roundIndex], heading',
+      events: '++id, sessionId, roundIndex, eventType, [sessionId+roundIndex]',
+      participants: 'participantKey, fullName, assignedCondition, createdAt'
+    });
   }
 }
 

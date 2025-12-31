@@ -94,7 +94,8 @@ export function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     // Draw reward positions
-    for (const reward of currentRound.rewardPositions) {
+    const rewardPositions = currentRound.rewardPositions || currentRound.resourcePositions || [];
+    for (const reward of rewardPositions) {
       const collected = rewardEvents.some(e => e.metadata?.rewardIndex === reward.id);
       
       if (collected) {

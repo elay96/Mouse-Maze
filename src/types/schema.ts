@@ -1,4 +1,4 @@
-// Mouse Maze Type Definitions
+// Mouse Maze Type Definitions - NetLogo Spatial Foraging Adaptation
 
 import type { Condition } from '../config/constants';
 
@@ -21,6 +21,12 @@ export interface Position {
   y: number;
 }
 
+// ============ AGENT STATE ============
+export interface AgentState extends Position {
+  heading: number;  // degrees, 0 = right, 90 = up, 180 = left, 270 = down
+  velocity: number; // constant forward speed
+}
+
 export interface ClusterParams {
   k: number;
   centers: Array<{
@@ -30,12 +36,15 @@ export interface ClusterParams {
   }>;
 }
 
-// ============ REWARD TYPES ============
+// ============ REWARD/RESOURCE TYPES ============
 export interface Reward extends Position {
   id: number;
   collected: boolean;
   timestampCollected?: string; // ISO 8601
 }
+
+// Alias for clarity with NetLogo terminology
+export type Resource = Reward;
 
 // ============ SESSION TYPES ============
 export interface SessionConfig {
@@ -53,6 +62,7 @@ export interface Session {
   startTimestamp: string; // ISO 8601
   endTimestamp?: string;  // ISO 8601
   roundsCompleted: number;
+  mazeCompleted?: boolean; // Whether Phase 1 maze training is complete
   status: 'in_progress' | 'complete' | 'incomplete';
   consentTimestamp: string;
   config: SessionConfig;
@@ -71,10 +81,12 @@ export interface Round {
   endTimestamp?: string;
   durationMs?: number;
   rewardsCollected: number;
-  blackPixelPositions: Position[];
-  rewardPositions: Reward[];
+  resourcePositions?: Reward[]; // NetLogo style: resource positions
   clusterParams?: ClusterParams;
   endReason?: 'all_rewards' | 'timeout';
+  // Legacy fields for backward compat
+  blackPixelPositions?: Position[];
+  rewardPositions?: Reward[];
 }
 
 // ============ MOVEMENT TRACKING ============
@@ -88,13 +100,26 @@ export interface MovementSample {
   timestampAbs: string;      // ISO 8601 absolute
   x: number;
   y: number;
-  velocity: number;          // pixels/second
+  heading: number;           // agent direction in degrees (0=right, 90=up)
+  velocity: number;          // pixels/second (constant for agent-based movement)
   distanceFromLast: number;  // Euclidean distance in pixels
-  acceleration: number;      // change in velocity
+  acceleration: number;      // change in velocity (typically 0 for constant speed)
+  foodHere: boolean;         // Was a resource collected at this sample?
 }
 
 // ============ EVENT TYPES ============
-export type EventType = 'round_start' | 'reward_hit' | 'round_end' | 'timeout' | 'mouse_enter' | 'mouse_leave';
+export type EventType = 
+  | 'round_start' 
+  | 'reward_hit' 
+  | 'round_end' 
+  | 'timeout' 
+  | 'maze_start'      // Phase 1: Started maze training
+  | 'maze_collision'  // Phase 1: Hit a wall, reset to start
+  | 'maze_complete'   // Phase 1: Reached target
+  | 'key_press'       // Keyboard input event (J/L)
+  | 'key_release'     // Keyboard input event (J/L)
+  | 'mouse_enter'     // Legacy: mouse entered canvas
+  | 'mouse_leave';    // Legacy: mouse left canvas
 
 export interface GameEvent {
   id?: number; // auto-increment
@@ -108,6 +133,9 @@ export interface GameEvent {
     rewardPosition?: Position;
     totalRewardsCollected?: number;
     reason?: 'all_rewards' | 'timeout';
+    key?: 'A' | 'D' | 'ArrowLeft' | 'ArrowRight';  // For key events
+    agentPosition?: Position; // Agent position at event time
+    agentHeading?: number;    // Agent heading at event time
   };
 }
 
@@ -136,6 +164,10 @@ export interface RoundStats {
   firstRewardLatency: number;    // ms
   meanInterRewardInterval: number; // ms
   
+  // Rotation patterns (new for agent-based movement)
+  totalRotations: number;        // count of direction changes
+  meanTurnAngle: number;         // average turn magnitude in degrees
+  
   // Spatial bias
   edgeTimePercent: number;
   centerBias: number;
@@ -162,7 +194,9 @@ export interface ExportData {
 export type AppScreen = 
   | 'landing'
   | 'instructions'
-  | 'game'
+  | 'maze_training'    // Phase 1: Navigate maze to target
+  | 'game'             // Phase 2: Foraging rounds (kept for compatibility)
+  | 'foraging'         // Phase 2: Alias for 'game'
   | 'round_transition'
   | 'completion'
   | 'admin_login'
@@ -175,6 +209,7 @@ export interface AppState {
   sessionId: string | null;
   condition: Condition | null;
   currentRound: number;
+  mazeCompleted: boolean;       // Whether Phase 1 is complete
   isAdmin: boolean;
 }
 
@@ -182,4 +217,3 @@ export interface AppState {
 export function hasParticipantProfile(session: Session): boolean {
   return !!(session.fullName && session.age && session.gender);
 }
-

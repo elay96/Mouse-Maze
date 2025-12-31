@@ -108,16 +108,19 @@ export const PathReplay = forwardRef<PathReplayHandle, PathReplayProps>(({ round
       }
     }
 
-    // Draw black pixels (faded)
-    ctx.fillStyle = `${BLACK_PIXEL_COLOR}40`;
-    for (const pixel of round.blackPixelPositions) {
-      ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2);
-      ctx.fill();
+    // Draw black pixels (faded) - legacy support
+    if (round.blackPixelPositions && round.blackPixelPositions.length > 0) {
+      ctx.fillStyle = `${BLACK_PIXEL_COLOR}40`;
+      for (const pixel of round.blackPixelPositions) {
+        ctx.beginPath();
+        ctx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // Draw reward positions
-    for (const reward of round.rewardPositions) {
+    // Draw reward/resource positions
+    const positions = round.rewardPositions || round.resourcePositions || [];
+    for (const reward of positions) {
       const collected = rewardEvents.some(
         e => e.metadata?.rewardIndex === reward.id && e.timestampMs <= currentTime
       );

@@ -15,6 +15,7 @@ function sessionToDb(session: Session): DbSession {
     start_timestamp: session.startTimestamp,
     end_timestamp: session.endTimestamp || null,
     rounds_completed: session.roundsCompleted,
+    maze_completed: session.mazeCompleted || false,
     status: session.status,
     consent_timestamp: session.consentTimestamp,
     config: session.config,
@@ -32,6 +33,7 @@ function dbToSession(db: DbSession): Session {
     startTimestamp: db.start_timestamp,
     endTimestamp: db.end_timestamp || undefined,
     roundsCompleted: db.rounds_completed,
+    mazeCompleted: db.maze_completed || false,
     status: db.status as Session['status'],
     consentTimestamp: db.consent_timestamp,
     config: db.config as Session['config'],
@@ -50,8 +52,8 @@ function roundToDb(round: Round): DbRound {
     end_timestamp: round.endTimestamp || null,
     duration_ms: round.durationMs || null,
     rewards_collected: round.rewardsCollected,
-    black_pixel_positions: round.blackPixelPositions,
-    reward_positions: round.rewardPositions,
+    black_pixel_positions: round.blackPixelPositions || [],
+    reward_positions: round.rewardPositions || round.resourcePositions || [],
     cluster_params: round.clusterParams || null,
     end_reason: round.endReason || null,
   };
@@ -66,6 +68,7 @@ function dbToRound(db: DbRound): Round {
     endTimestamp: db.end_timestamp || undefined,
     durationMs: db.duration_ms || undefined,
     rewardsCollected: db.rewards_collected,
+    resourcePositions: db.reward_positions as Round['resourcePositions'],
     blackPixelPositions: db.black_pixel_positions as Round['blackPixelPositions'],
     rewardPositions: db.reward_positions as Round['rewardPositions'],
     clusterParams: db.cluster_params as Round['clusterParams'],
@@ -83,9 +86,11 @@ function movementToDb(movement: MovementSample): DbMovement {
     timestamp_abs: movement.timestampAbs,
     x: movement.x,
     y: movement.y,
+    heading: movement.heading,
     velocity: movement.velocity,
     distance_from_last: movement.distanceFromLast,
     acceleration: movement.acceleration,
+    food_here: movement.foodHere,
   };
 }
 
@@ -100,9 +105,11 @@ function dbToMovement(db: DbMovement): MovementSample {
     timestampAbs: db.timestamp_abs,
     x: db.x,
     y: db.y,
+    heading: db.heading || 0,
     velocity: db.velocity,
     distanceFromLast: db.distance_from_last,
     acceleration: db.acceleration,
+    foodHere: db.food_here || false,
   };
 }
 
@@ -169,6 +176,7 @@ export async function cloudUpdateSession(sessionId: string, updates: Partial<Ses
   try {
     const dbUpdates: Partial<DbSession> = {};
     if (updates.roundsCompleted !== undefined) dbUpdates.rounds_completed = updates.roundsCompleted;
+    if (updates.mazeCompleted !== undefined) dbUpdates.maze_completed = updates.mazeCompleted;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.endTimestamp !== undefined) dbUpdates.end_timestamp = updates.endTimestamp;
 
@@ -334,7 +342,7 @@ export async function cloudSaveMovementBatch(movements: MovementSample[]): Promi
       const batch = dbMovements.slice(i, i + batchSize);
       console.log(`[Cloud] Inserting batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(dbMovements.length/batchSize)} (${batch.length} items)`);
       
-      const { data, error } = await supabase.from('movements').insert(batch).select('id');
+      const { error } = await supabase.from('movements').insert(batch).select('id');
       
       if (error) {
         console.error('[Cloud] ❌ Error saving movements batch:', error.message, error.details, error.hint, error.code);

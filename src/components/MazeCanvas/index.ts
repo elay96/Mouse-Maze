@@ -1,0 +1,2 @@
+export { MazeCanvas } from './MazeCanvas';
+

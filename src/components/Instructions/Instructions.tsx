@@ -1,4 +1,4 @@
-// Instructions Screen
+// Instructions Screen - NetLogo Spatial Foraging Adaptation
 
 import type { Condition } from '../../config/constants';
 import { N_ROUNDS, N_REWARDS } from '../../config/constants';
@@ -20,22 +20,97 @@ export function Instructions({ participantId, condition, onStart }: Instructions
             <span className={styles.participantId}>{participantId}</span>
           </div>
           <div className={styles.conditionBadge} data-condition={condition}>
-            Condition: {condition}
+            {condition}
           </div>
         </div>
 
-        <h1 className={styles.title}>How to Play</h1>
+        <h1 className={styles.title}>Spatial Foraging Task</h1>
+        <p className={styles.subtitle}>Learn to navigate and collect hidden resources</p>
+
+        <div className={styles.phases}>
+          <div className={styles.phase}>
+            <div className={styles.phaseNumber}>1</div>
+            <div className={styles.phaseContent}>
+              <h3>Training Phase</h3>
+              <p>First, you'll practice navigating through a maze to reach a target.</p>
+            </div>
+          </div>
+          <div className={styles.phase}>
+            <div className={styles.phaseNumber}>2</div>
+            <div className={styles.phaseContent}>
+              <h3>Foraging Phase</h3>
+              <p>Then, complete {N_ROUNDS} rounds of collecting hidden resources.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.controlsSection}>
+          <h2 className={styles.controlsTitle}>Keyboard Controls</h2>
+          <p className={styles.controlsSubtitle}>Your agent moves forward automatically. Use these keys to steer:</p>
+          
+          <div className={styles.controls}>
+            <div className={styles.keyGroup}>
+              <div className={styles.key}>
+                <span className={styles.keyLabel}>A</span>
+              </div>
+              <span className={styles.keyOr}>or</span>
+              <div className={styles.key}>
+                <span className={styles.keyLabel}>←</span>
+              </div>
+              <span className={styles.keyAction}>Turn Left</span>
+            </div>
+            <div className={styles.agentPreview}>
+              <svg viewBox="0 0 40 40" className={styles.agentIcon}>
+                <polygon points="20,5 10,35 30,35" fill="#ffd700" />
+              </svg>
+            </div>
+            <div className={styles.keyGroup}>
+              <div className={styles.key}>
+                <span className={styles.keyLabel}>D</span>
+              </div>
+              <span className={styles.keyOr}>or</span>
+              <div className={styles.key}>
+                <span className={styles.keyLabel}>→</span>
+              </div>
+              <span className={styles.keyAction}>Turn Right</span>
+            </div>
+          </div>
+        </div>
 
         <div className={styles.instructions}>
           <div className={styles.step}>
             <div className={styles.stepIcon}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 19V5M5 12l7-7 7 7" />
+                <polygon points="12,2 22,20 2,20" />
               </svg>
             </div>
             <div className={styles.stepContent}>
-              <h3>Explore the Canvas</h3>
-              <p>Move your mouse cursor across the canvas area. Black dots indicate the environment pattern.</p>
+              <h3>Control Your Agent</h3>
+              <p>You control a <strong>yellow triangle</strong> that moves forward automatically. Press <strong>A</strong> or <strong>←</strong> to turn left and <strong>D</strong> or <strong>→</strong> to turn right.</p>
+            </div>
+          </div>
+
+          <div className={styles.step}>
+            <div className={styles.stepIcon}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="8" fill="#0066ff" stroke="none" />
+              </svg>
+            </div>
+            <div className={styles.stepContent}>
+              <h3>Collect Resources</h3>
+              <p>There are <strong>{N_REWARDS} hidden resources</strong> on each map. When you collect one, it turns <strong style={{ color: '#0066ff' }}>blue</strong> and you hear a sound.</p>
+            </div>
+          </div>
+
+          <div className={styles.step}>
+            <div className={styles.stepIcon}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="4" y="4" width="16" height="16" rx="2" fill="#ef4444" stroke="none" />
+              </svg>
+            </div>
+            <div className={styles.stepContent}>
+              <h3>Training: Reach the Target</h3>
+              <p>In training, navigate to the <strong style={{ color: '#ef4444' }}>red target</strong>. Avoid <strong style={{ color: '#0066ff' }}>blue walls</strong> - hitting one resets you to start!</p>
             </div>
           </div>
 
@@ -47,34 +122,8 @@ export function Instructions({ participantId, condition, onStart }: Instructions
               </svg>
             </div>
             <div className={styles.stepContent}>
-              <h3>Find Hidden Rewards</h3>
-              <p>There are <strong>{N_REWARDS} hidden rewards</strong> on each canvas. You cannot see them until collected - you'll hear a sound and see a brief flash when your cursor finds one.</p>
-            </div>
-          </div>
-
-          <div className={styles.step}>
-            <div className={styles.stepIcon}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </div>
-            <div className={styles.stepContent}>
-              <h3>Complete All Rounds</h3>
-              <p>You will play <strong>{N_ROUNDS} rounds</strong>. Each round has a time limit of <strong>30 Seconds</strong>. Try to find as many rewards as possible!</p>
-            </div>
-          </div>
-
-          <div className={styles.step}>
-            <div className={styles.stepIcon}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2a3 3 0 00-3 3v4a3 3 0 006 0V5a3 3 0 00-3-3z" />
-                <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3" />
-              </svg>
-            </div>
-            <div className={styles.stepContent}>
-              <h3>Audio Feedback</h3>
-              <p>Make sure your audio is on! You'll hear a pleasant chime each time you collect a reward.</p>
+              <h3>Timed Rounds</h3>
+              <p>Each foraging round has a <strong>60 second</strong> time limit. Collect as many resources as possible!</p>
             </div>
           </div>
         </div>
@@ -82,14 +131,15 @@ export function Instructions({ participantId, condition, onStart }: Instructions
         <div className={styles.tips}>
           <div className={styles.tipHeader}>Tips</div>
           <ul>
-            <li>Keep your mouse moving smoothly across the canvas</li>
-            <li>Pay attention to the pattern of rewards you find</li>
-            <li>Your goal is to maximize your score in each round</li>
+            <li>The agent wraps around screen edges during foraging</li>
+            <li>Listen for audio cues when collecting resources</li>
+            <li>Pay attention to patterns in resource distribution</li>
+            <li>Your score persists - maximize collection each round!</li>
           </ul>
         </div>
 
         <button onClick={onStart} className={styles.startButton}>
-          Start Round 1
+          Begin Training
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
@@ -98,4 +148,3 @@ export function Instructions({ participantId, condition, onStart }: Instructions
     </div>
   );
 }
-

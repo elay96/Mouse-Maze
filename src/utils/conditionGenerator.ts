@@ -1,4 +1,7 @@
-// Condition Generation Algorithms for CLUSTER and NOISE conditions
+// Condition Generation Algorithms for CONCENTRATED and DIFFUSE conditions
+// Based on NetLogo specification:
+// - DIFFUSE: ~700 scattered seed points
+// - CONCENTRATED: 4 dense clusters (4 seed points expanded 20 times)
 // Uses seeded RNG for deterministic generation per participant+round
 
 import type { Position, Reward, ClusterParams } from '../types/schema';
@@ -6,14 +9,13 @@ import type { Condition } from '../config/constants';
 import {
   CANVAS_SIZE,
   N_REWARDS,
-  CLUSTER_K_MIN,
-  CLUSTER_K_MAX,
-  CLUSTER_RADIUS,
-  CLUSTER_MIN_SEPARATION,
-  CLUSTER_EDGE_MARGIN,
+  CONCENTRATED_N_CLUSTERS,
+  CONCENTRATED_CLUSTER_RADIUS,
+  CONCENTRATED_MIN_SEPARATION,
+  CONCENTRATED_EDGE_MARGIN,
+  DIFFUSE_EDGE_MARGIN,
   REWARD_MIN_SPACING,
   REWARD_EDGE_MARGIN,
-  NOISE_REWARD_EDGE_MARGIN,
 } from '../config/constants';
 import { SeededRandom } from './hash';
 
@@ -57,25 +59,27 @@ function sampleInCircle(rng: SeededRandom, centerX: number, centerY: number, rad
   };
 }
 
-// ============ CLUSTER CONDITION GENERATION ============
+// ============ CONCENTRATED CONDITION GENERATION ============
+// NetLogo spec: 4 dense patches (4 seed points expanded 20 times)
 
-interface ClusterGenerationResult {
+interface ConcentratedGenerationResult {
   rewards: Reward[];
   clusterParams: ClusterParams;
 }
 
 /**
- * Generate cluster centers ensuring minimum separation and edge margin
+ * Generate cluster centers for CONCENTRATED condition
+ * Creates 4 clusters ensuring minimum separation and edge margin
  */
-function generateClusterCenters(rng: SeededRandom, k: number): Array<{ x: number; y: number; radius: number }> {
+function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: number; radius: number }> {
   const centers: Array<{ x: number; y: number; radius: number }> = [];
   const maxAttempts = 1000;
-  const minX = CLUSTER_EDGE_MARGIN + CLUSTER_RADIUS;
-  const maxX = CANVAS_SIZE - CLUSTER_EDGE_MARGIN - CLUSTER_RADIUS;
-  const minY = CLUSTER_EDGE_MARGIN + CLUSTER_RADIUS;
-  const maxY = CANVAS_SIZE - CLUSTER_EDGE_MARGIN - CLUSTER_RADIUS;
+  const minX = CONCENTRATED_EDGE_MARGIN + CONCENTRATED_CLUSTER_RADIUS;
+  const maxX = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - CONCENTRATED_CLUSTER_RADIUS;
+  const minY = CONCENTRATED_EDGE_MARGIN + CONCENTRATED_CLUSTER_RADIUS;
+  const maxY = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - CONCENTRATED_CLUSTER_RADIUS;
   
-  for (let i = 0; i < k; i++) {
+  for (let i = 0; i < CONCENTRATED_N_CLUSTERS; i++) {
     let attempts = 0;
     let placed = false;
     
@@ -83,8 +87,8 @@ function generateClusterCenters(rng: SeededRandom, k: number): Array<{ x: number
       const x = rng.nextInt(minX, maxX);
       const y = rng.nextInt(minY, maxY);
       
-      const candidate = { x, y, radius: CLUSTER_RADIUS };
-      const isValid = centers.every(c => distance(candidate, c) >= CLUSTER_MIN_SEPARATION);
+      const candidate = { x, y, radius: CONCENTRATED_CLUSTER_RADIUS };
+      const isValid = centers.every(c => distance(candidate, c) >= CONCENTRATED_MIN_SEPARATION);
       
       if (isValid) {
         centers.push(candidate);
@@ -98,7 +102,7 @@ function generateClusterCenters(rng: SeededRandom, k: number): Array<{ x: number
       centers.push({
         x: rng.nextInt(minX, maxX),
         y: rng.nextInt(minY, maxY),
-        radius: CLUSTER_RADIUS
+        radius: CONCENTRATED_CLUSTER_RADIUS
       });
     }
   }
@@ -107,131 +111,134 @@ function generateClusterCenters(rng: SeededRandom, k: number): Array<{ x: number
 }
 
 /**
- * Generate reward positions for CLUSTER condition (uniformly within circular clusters)
+ * Generate reward positions for CONCENTRATED condition
+ * Distributes rewards densely within 4 clusters
  * GUARANTEES exactly N_REWARDS rewards are generated
  */
-function generateClusterRewards(
+function generateConcentratedRewards(
   rng: SeededRandom,
   centers: Array<{ x: number; y: number; radius: number }>
 ): Reward[] {
   const rewards: Reward[] = [];
-  const maxAttemptsPerReward = 100;
-  const maxTotalAttempts = N_REWARDS * maxAttemptsPerReward * 2;
+  const maxAttemptsPerReward = 50;
+  const maxTotalAttempts = N_REWARDS * maxAttemptsPerReward * 3;
   let totalAttempts = 0;
   let currentSpacing = REWARD_MIN_SPACING;
   
-  // Keep trying until we have exactly N_REWARDS
-  while (rewards.length < N_REWARDS && totalAttempts < maxTotalAttempts) {
-    const i = rewards.length;
-    // Pick a cluster (round-robin distribution)
-    const clusterIndex = i % centers.length;
-    const center = centers[clusterIndex];
+  // Distribute rewards among clusters
+  const rewardsPerCluster = Math.floor(N_REWARDS / centers.length);
+  const extraRewards = N_REWARDS % centers.length;
+  
+  for (let clusterIdx = 0; clusterIdx < centers.length; clusterIdx++) {
+    const center = centers[clusterIdx];
+    const targetCount = rewardsPerCluster + (clusterIdx < extraRewards ? 1 : 0);
+    let clusterRewards = 0;
     
-    let attempts = 0;
-    let placed = false;
-    
-    while (attempts < maxAttemptsPerReward && !placed) {
-      const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+    while (clusterRewards < targetCount && totalAttempts < maxTotalAttempts) {
+      const i = rewards.length;
+      let attempts = 0;
+      let placed = false;
       
-      // Ensure within canvas bounds with margin
-      const clampedX = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
-      const clampedY = clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
-      const candidate = { x: clampedX, y: clampedY };
-      
-      if (respectsSpacing(candidate, rewards, currentSpacing)) {
-        rewards.push({
-          id: i,
-          x: candidate.x,
-          y: candidate.y,
-          collected: false
-        });
-        placed = true;
+      while (attempts < maxAttemptsPerReward && !placed) {
+        const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+        
+        // Ensure within canvas bounds with margin
+        const clampedX = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
+        const clampedY = clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
+        const candidate = { x: clampedX, y: clampedY };
+        
+        if (respectsSpacing(candidate, rewards, currentSpacing)) {
+          rewards.push({
+            id: i,
+            x: candidate.x,
+            y: candidate.y,
+            collected: false
+          });
+          placed = true;
+          clusterRewards++;
+        }
+        attempts++;
+        totalAttempts++;
       }
-      attempts++;
-      totalAttempts++;
-    }
-    
-    // If we couldn't place with current spacing, try with reduced spacing
-    if (!placed) {
-      // Reduce spacing requirement and try again
-      currentSpacing = Math.max(5, currentSpacing * 0.8);
       
-      // Try one more time with reduced spacing
-      const pos = sampleInCircle(rng, center.x, center.y, center.radius);
-      const x = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
-      const y = clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
-      
-      // Only check against very close rewards (10px)
-      const tooClose = rewards.some(r => distance(r, { x, y }) < 10);
-      if (!tooClose) {
-        rewards.push({
-          id: i,
-          x,
-          y,
-          collected: false
-        });
+      // If we couldn't place with current spacing, reduce it
+      if (!placed) {
+        currentSpacing = Math.max(3, currentSpacing * 0.9);
+        
+        // Force place with reduced spacing
+        const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+        const x = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
+        const y = clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
+        
+        const tooClose = rewards.some(r => distance(r, { x, y }) < 3);
+        if (!tooClose) {
+          rewards.push({
+            id: rewards.length,
+            x,
+            y,
+            collected: false
+          });
+          clusterRewards++;
+        }
+        totalAttempts++;
       }
-      totalAttempts++;
     }
   }
   
-  // FINAL FALLBACK: If still not enough, force place remaining rewards
+  // FINAL FALLBACK: Fill remaining rewards if needed
   while (rewards.length < N_REWARDS) {
-    const i = rewards.length;
-    const clusterIndex = i % centers.length;
-    const center = centers[clusterIndex];
+    const clusterIdx = rewards.length % centers.length;
+    const center = centers[clusterIdx];
     const pos = sampleInCircle(rng, center.x, center.y, center.radius);
     
     rewards.push({
-      id: i,
+      id: rewards.length,
       x: clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN),
       y: clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN),
       collected: false
     });
   }
   
-  // ASSERTION: Must have exactly N_REWARDS
   if (rewards.length !== N_REWARDS) {
-    console.error(`[CRITICAL] Cluster generator produced ${rewards.length} rewards, expected ${N_REWARDS}`);
+    console.error(`[CRITICAL] Concentrated generator produced ${rewards.length} rewards, expected ${N_REWARDS}`);
   }
   
   return rewards;
 }
 
 /**
- * Generate complete CLUSTER condition layout (seeded)
+ * Generate complete CONCENTRATED condition layout (seeded)
  */
-function generateClusterCondition(rng: SeededRandom): ClusterGenerationResult {
-  // K is deterministic based on seed
-  const k = rng.nextInt(CLUSTER_K_MIN, CLUSTER_K_MAX);
-  const centers = generateClusterCenters(rng, k);
-  const rewards = generateClusterRewards(rng, centers);
+function generateConcentratedCondition(rng: SeededRandom): ConcentratedGenerationResult {
+  const centers = generateConcentratedCenters(rng);
+  const rewards = generateConcentratedRewards(rng, centers);
   
   return {
     rewards,
-    clusterParams: { k, centers }
+    clusterParams: { k: CONCENTRATED_N_CLUSTERS, centers }
   };
 }
 
-// ============ NOISE CONDITION GENERATION ============
+// ============ DIFFUSE CONDITION GENERATION ============
+// NetLogo spec: ~700 seed points scattered randomly
 
-interface NoiseGenerationResult {
+interface DiffuseGenerationResult {
   rewards: Reward[];
 }
 
 /**
- * Generate reward positions for NOISE condition (uniform distribution)
+ * Generate reward positions for DIFFUSE condition (scattered distribution)
  * GUARANTEES exactly N_REWARDS rewards are generated
  */
-function generateNoiseRewards(rng: SeededRandom): Reward[] {
+function generateDiffuseRewards(rng: SeededRandom): Reward[] {
   const rewards: Reward[] = [];
-  const maxAttemptsPerReward = 100;
-  const maxTotalAttempts = N_REWARDS * maxAttemptsPerReward * 2;
+  const maxAttemptsPerReward = 50;
+  const maxTotalAttempts = N_REWARDS * maxAttemptsPerReward * 3;
   let totalAttempts = 0;
-  const margin = NOISE_REWARD_EDGE_MARGIN;
+  const margin = DIFFUSE_EDGE_MARGIN;
   let currentSpacing = REWARD_MIN_SPACING;
   
-  // Keep trying until we have exactly N_REWARDS
+  // Generate scattered rewards across the entire canvas
   while (rewards.length < N_REWARDS && totalAttempts < maxTotalAttempts) {
     const i = rewards.length;
     let attempts = 0;
@@ -255,19 +262,17 @@ function generateNoiseRewards(rng: SeededRandom): Reward[] {
       totalAttempts++;
     }
     
-    // If we couldn't place with current spacing, try with reduced spacing
+    // If we couldn't place with current spacing, reduce it
     if (!placed) {
-      // Reduce spacing requirement
-      currentSpacing = Math.max(5, currentSpacing * 0.8);
+      currentSpacing = Math.max(3, currentSpacing * 0.9);
       
       const x = rng.nextInt(margin, CANVAS_SIZE - margin);
       const y = rng.nextInt(margin, CANVAS_SIZE - margin);
       
-      // Only check against very close rewards (10px)
-      const tooClose = rewards.some(r => distance(r, { x, y }) < 10);
+      const tooClose = rewards.some(r => distance(r, { x, y }) < 3);
       if (!tooClose) {
         rewards.push({
-          id: i,
+          id: rewards.length,
           x,
           y,
           collected: false
@@ -277,30 +282,28 @@ function generateNoiseRewards(rng: SeededRandom): Reward[] {
     }
   }
   
-  // FINAL FALLBACK: If still not enough, force place remaining rewards
+  // FINAL FALLBACK: Force place remaining rewards
   while (rewards.length < N_REWARDS) {
-    const i = rewards.length;
     rewards.push({
-      id: i,
+      id: rewards.length,
       x: rng.nextInt(margin, CANVAS_SIZE - margin),
       y: rng.nextInt(margin, CANVAS_SIZE - margin),
       collected: false
     });
   }
   
-  // ASSERTION: Must have exactly N_REWARDS
   if (rewards.length !== N_REWARDS) {
-    console.error(`[CRITICAL] Noise generator produced ${rewards.length} rewards, expected ${N_REWARDS}`);
+    console.error(`[CRITICAL] Diffuse generator produced ${rewards.length} rewards, expected ${N_REWARDS}`);
   }
   
   return rewards;
 }
 
 /**
- * Generate complete NOISE condition layout (seeded)
+ * Generate complete DIFFUSE condition layout (seeded)
  */
-function generateNoiseCondition(rng: SeededRandom): NoiseGenerationResult {
-  const rewards = generateNoiseRewards(rng);
+function generateDiffuseCondition(rng: SeededRandom): DiffuseGenerationResult {
+  const rewards = generateDiffuseRewards(rng);
   return { rewards };
 }
 
@@ -313,16 +316,16 @@ export interface RoundLayout {
 
 /**
  * Generate round layout based on condition with seeded RNG
- * @param condition - CLUSTER or NOISE
+ * @param condition - CONCENTRATED or DIFFUSE
  * @param seed - seed string (e.g., participantKey + roundIndex)
  */
 export function generateRoundLayout(condition: Condition, seed: string): RoundLayout {
   const rng = new SeededRandom(seed);
   
-  if (condition === 'CLUSTER') {
-    return generateClusterCondition(rng);
+  if (condition === 'CONCENTRATED') {
+    return generateConcentratedCondition(rng);
   } else {
-    return generateNoiseCondition(rng);
+    return generateDiffuseCondition(rng);
   }
 }
 
@@ -331,10 +334,8 @@ export function generateRoundLayout(condition: Condition, seed: string): RoundLa
  */
 export function assignCondition(): Condition {
   // Use crypto for true randomness
-  // Generate a random number and use it to make a true 50/50 decision
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  // Convert to 0-1 range and use threshold for true 50/50 split
-  const randomValue = array[0] / (0xFFFFFFFF + 1); // Normalize to [0, 1)
-  return randomValue < 0.5 ? 'CLUSTER' : 'NOISE';
+  const randomValue = array[0] / (0xFFFFFFFF + 1);
+  return randomValue < 0.5 ? 'CONCENTRATED' : 'DIFFUSE';
 }

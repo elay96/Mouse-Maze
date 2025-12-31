@@ -138,10 +138,10 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
 
   const stats = useMemo(() => {
     const total = sessions.length;
-    const cluster = sessions.filter(s => s.condition === 'CLUSTER').length;
-    const noise = sessions.filter(s => s.condition === 'NOISE').length;
+    const concentrated = sessions.filter(s => s.condition === 'CONCENTRATED').length;
+    const diffuse = sessions.filter(s => s.condition === 'DIFFUSE').length;
     const complete = sessions.filter(s => s.status === 'complete').length;
-    return { total, cluster, noise, complete };
+    return { total, concentrated, diffuse, complete };
   }, [sessions]);
 
   // Helper to display participant info
@@ -186,12 +186,12 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
           <span className={styles.statLabel}>Total Sessions</span>
         </div>
         <div className={styles.stat}>
-          <span className={styles.statValue} data-condition="CLUSTER">{stats.cluster}</span>
-          <span className={styles.statLabel}>Cluster</span>
+          <span className={styles.statValue} data-condition="CONCENTRATED">{stats.concentrated}</span>
+          <span className={styles.statLabel}>Concentrated</span>
         </div>
         <div className={styles.stat}>
-          <span className={styles.statValue} data-condition="NOISE">{stats.noise}</span>
-          <span className={styles.statLabel}>Noise</span>
+          <span className={styles.statValue} data-condition="DIFFUSE">{stats.diffuse}</span>
+          <span className={styles.statLabel}>Diffuse</span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statValue} data-status="complete">{stats.complete}</span>
@@ -298,8 +298,8 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
             className={styles.select}
           >
             <option value="ALL">All Conditions</option>
-            <option value="CLUSTER">Cluster</option>
-            <option value="NOISE">Noise</option>
+            <option value="CONCENTRATED">Concentrated</option>
+            <option value="DIFFUSE">Diffuse</option>
           </select>
 
           <select 

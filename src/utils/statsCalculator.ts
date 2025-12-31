@@ -56,6 +56,9 @@ export function calculateRoundStats(
   // Spatial bias
   const spatialBias = calculateSpatialBias(sortedMovements);
   
+  // Rotation analysis (for agent-based movement)
+  const rotationMetrics = calculateRotationMetrics(sortedMovements);
+  
   return {
     sessionId,
     roundIndex,
@@ -70,6 +73,7 @@ export function calculateRoundStats(
     revisitRate,
     ...pauseMetrics,
     ...rewardTimings,
+    ...rotationMetrics,
     ...spatialBias
   };
 }
@@ -100,6 +104,8 @@ function createEmptyStats(
     meanPauseDuration: 0,
     firstRewardLatency: durationMs,
     meanInterRewardInterval: 0,
+    totalRotations: 0,
+    meanTurnAngle: 0,
     edgeTimePercent: 0,
     centerBias: 0,
     quadrantDistribution: { NW: 25, NE: 25, SW: 25, SE: 25 }
@@ -284,6 +290,47 @@ function calculateSpatialBias(movements: MovementSample[]): {
   };
   
   return { edgeTimePercent, centerBias, quadrantDistribution };
+}
+
+/**
+ * Calculate rotation metrics (for agent-based movement)
+ */
+function calculateRotationMetrics(movements: MovementSample[]): {
+  totalRotations: number;
+  meanTurnAngle: number;
+} {
+  if (movements.length < 2) {
+    return { totalRotations: 0, meanTurnAngle: 0 };
+  }
+
+  let totalRotations = 0;
+  let totalTurnAngle = 0;
+  const turnAngles: number[] = [];
+
+  for (let i = 1; i < movements.length; i++) {
+    const prevHeading = movements[i - 1].heading || 0;
+    const currHeading = movements[i].heading || 0;
+    
+    // Calculate heading difference, handling wraparound
+    let angleDiff = currHeading - prevHeading;
+    if (angleDiff > 180) angleDiff -= 360;
+    if (angleDiff < -180) angleDiff += 360;
+    
+    const absAngle = Math.abs(angleDiff);
+    
+    // Count as a rotation if angle change is significant (> 1 degree)
+    if (absAngle > 1) {
+      totalRotations++;
+      turnAngles.push(absAngle);
+      totalTurnAngle += absAngle;
+    }
+  }
+
+  const meanTurnAngle = turnAngles.length > 0 
+    ? totalTurnAngle / turnAngles.length 
+    : 0;
+
+  return { totalRotations, meanTurnAngle };
 }
 
 /**

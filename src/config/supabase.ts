@@ -28,7 +28,7 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; erro
   }
   
   try {
-    const { data, error } = await supabase.from('sessions').select('count').limit(1);
+    const { error } = await supabase.from('sessions').select('count').limit(1);
     if (error) {
       console.error('[Supabase] Connection test failed:', error);
       return { success: false, error: error.message };
@@ -49,6 +49,7 @@ export interface DbSession {
   start_timestamp: string;
   end_timestamp: string | null;
   rounds_completed: number;
+  maze_completed: boolean;
   status: string;
   consent_timestamp: string;
   config: object;
@@ -83,9 +84,11 @@ export interface DbMovement {
   timestamp_abs: string;
   x: number;
   y: number;
+  heading: number;
   velocity: number;
   distance_from_last: number;
   acceleration: number;
+  food_here: boolean;
 }
 
 export interface DbEvent {

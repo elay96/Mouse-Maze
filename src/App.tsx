@@ -1,4 +1,5 @@
-// Main App Component - Mouse Maze Research Study
+// Main App Component - Spatial Foraging Research Study (NetLogo Adaptation)
+// Phase Flow: Landing -> Instructions -> Maze Training -> Foraging Rounds -> Completion
 
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,7 +30,8 @@ import { assignCondition } from './utils/conditionGenerator';
 
 import { Landing, type ParticipantInfo } from './components/Landing';
 import { Instructions } from './components/Instructions';
-import { GameCanvas } from './components/GameCanvas';
+import { MazeCanvas } from './components/MazeCanvas';
+import { ForagingCanvas } from './components/ForagingCanvas';
 import { RoundTransition } from './components/RoundTransition';
 import { Completion } from './components/Completion';
 import { AdminLogin, AdminDashboard, SessionDetail } from './components/Admin';
@@ -39,7 +41,8 @@ import './App.css';
 type Screen = 
   | 'landing'
   | 'instructions'
-  | 'game'
+  | 'maze_training'
+  | 'foraging'
   | 'round_transition'
   | 'completion'
   | 'admin_login'
@@ -49,10 +52,11 @@ type Screen =
 function App() {
   // Core state
   const [screen, setScreen] = useState<Screen>('landing');
-  const [participantId, setParticipantId] = useState<string | null>(null); // participantKey
+  const [participantId, setParticipantId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [condition, setCondition] = useState<Condition | null>(null);
   const [currentRound, setCurrentRound] = useState(0);
+  const [_mazeCompleted, setMazeCompleted] = useState(false);
   
   // Session data
   const [completedRounds, setCompletedRounds] = useState<Round[]>([]);
@@ -106,6 +110,7 @@ function App() {
       // Completed session - show completion screen
       setSessionId(existingSession.sessionId);
       setSession(existingSession);
+      setMazeCompleted(existingSession.mazeCompleted ?? true);
       
       const rounds = await getRoundsForSession(existingSession.sessionId);
       const movements = await getMovementsForSession(existingSession.sessionId);
@@ -116,8 +121,7 @@ function App() {
       setAllEvents(events);
       setScreen('completion');
     } else {
-      // Either no session or incomplete session - ALWAYS start fresh from Round 1
-      // Delete old incomplete session if exists
+      // Either no session or incomplete session - start fresh
       if (existingSession) {
         await deleteSession(existingSession.sessionId);
       }
@@ -131,6 +135,7 @@ function App() {
         condition: assignedCondition,
         startTimestamp: new Date().toISOString(),
         roundsCompleted: 0,
+        mazeCompleted: false,
         status: 'in_progress',
         consentTimestamp: new Date().toISOString(),
         config: {
@@ -140,7 +145,6 @@ function App() {
           timeLimitMs: TIME_LIMIT,
           nRounds: N_ROUNDS
         },
-        // Store profile info in session
         fullName,
         age,
         gender
@@ -148,7 +152,7 @@ function App() {
 
       await createSession(newSession);
       
-      // Also sync to cloud (don't await to not block UI, but log result)
+      // Sync to cloud
       cloudCreateSession(newSession).then(success => {
         if (success) {
           console.log('[App] ✅ Session synced to cloud');
@@ -160,22 +164,35 @@ function App() {
       setSessionId(newSessionId);
       setSession(newSession);
       setCurrentRound(0);
+      setMazeCompleted(false);
       setCompletedRounds([]);
       setScreen('instructions');
     }
   }, []);
 
-  // Handle instructions complete -> start first round
+  // Handle instructions complete -> go to maze training
   const handleInstructionsComplete = useCallback(() => {
-    setScreen('game');
+    setScreen('maze_training');
   }, []);
 
-  // Handle round complete - directly proceed to next round (countdown already shown in GameCanvas)
+  // Handle maze training complete -> start foraging rounds
+  const handleMazeComplete = useCallback(async () => {
+    setMazeCompleted(true);
+    
+    // Update session
+    if (sessionId) {
+      await updateSession(sessionId, { mazeCompleted: true });
+      cloudUpdateSession(sessionId, { mazeCompleted: true });
+    }
+    
+    setScreen('foraging');
+  }, [sessionId]);
+
+  // Handle round complete
   const handleRoundComplete = useCallback(async (round: Round) => {
     const newRounds = [...completedRounds, round];
     setCompletedRounds(newRounds);
 
-    // Update session locally
     if (sessionId) {
       await updateSession(sessionId, {
         roundsCompleted: newRounds.length
@@ -185,7 +202,7 @@ function App() {
       cloudSaveRound(round).then(ok => console.log('[App] Round sync:', ok ? '✅' : '❌'));
       cloudUpdateSession(sessionId, { roundsCompleted: newRounds.length });
       
-      // Sync movements and events for this round immediately
+      // Sync movements and events for this round
       const roundMovements = await getMovementsForRound(sessionId, round.roundIndex);
       const roundEvents = await getEventsForRound(sessionId, round.roundIndex);
       console.log(`[App] Round ${round.roundIndex} - Movements: ${roundMovements.length}, Events: ${roundEvents.length}`);
@@ -202,10 +219,10 @@ function App() {
       }
     }
 
-    // Check if more rounds - go directly to next round (no transition screen needed)
+    // Check if more rounds
     if (newRounds.length < N_ROUNDS) {
       setCurrentRound(newRounds.length);
-      setScreen('game');
+      setScreen('foraging');
     } else {
       // All rounds complete
       if (sessionId) {
@@ -215,17 +232,13 @@ function App() {
           endTimestamp: endTime
         });
 
-        // Load all data for completion screen
         const movements = await getMovementsForSession(sessionId);
         const events = await getEventsForSession(sessionId);
         setAllMovements(movements);
         setAllEvents(events);
         
-        // Sync to cloud - complete session with all data
+        // Sync to cloud
         console.log('[App] Syncing complete session to cloud...');
-        console.log('[App] Movements to sync:', movements.length);
-        console.log('[App] Events to sync:', events.length);
-        
         cloudUpdateSession(sessionId, { status: 'complete', endTimestamp: endTime })
           .then(ok => console.log('[App] Session update:', ok ? '✅' : '❌'));
         cloudSaveMovementBatch(movements)
@@ -233,7 +246,6 @@ function App() {
         cloudSaveEventBatch(events)
           .then(ok => console.log('[App] Events sync:', ok ? '✅' : '❌'));
         
-        // Update session object
         setSession(prev => prev ? { ...prev, status: 'complete', endTimestamp: endTime } : null);
       }
       setScreen('completion');
@@ -246,17 +258,17 @@ function App() {
       setScreen('completion');
     } else {
       setCurrentRound(completedRounds.length);
-      setScreen('game');
+      setScreen('foraging');
     }
   }, [completedRounds.length]);
 
   // Handle finish study
   const handleFinish = useCallback(() => {
-    // Reset state
     setParticipantId(null);
     setSessionId(null);
     setCondition(null);
     setCurrentRound(0);
+    setMazeCompleted(false);
     setCompletedRounds([]);
     setSession(null);
     setAllMovements([]);
@@ -305,9 +317,18 @@ function App() {
           />
         ) : null;
 
-      case 'game':
+      case 'maze_training':
+        return sessionId && participantId ? (
+          <MazeCanvas
+            sessionId={sessionId}
+            participantId={participantId}
+            onComplete={handleMazeComplete}
+          />
+        ) : null;
+
+      case 'foraging':
         return sessionId && participantId && condition ? (
-          <GameCanvas
+          <ForagingCanvas
             sessionId={sessionId}
             participantId={participantId}
             condition={condition}

@@ -1,0 +1,2 @@
+export { ForagingCanvas } from './ForagingCanvas';
+

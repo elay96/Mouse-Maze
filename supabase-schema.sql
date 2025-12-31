@@ -1,5 +1,6 @@
--- Mouse Maze Supabase Schema
+-- Mouse Maze Supabase Schema (NetLogo Spatial Foraging Adaptation)
 -- Run this SQL in your Supabase SQL Editor to create the required tables
+-- Version 3: Added maze_completed, heading, food_here fields
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   start_timestamp TIMESTAMPTZ NOT NULL,
   end_timestamp TIMESTAMPTZ,
   rounds_completed INTEGER DEFAULT 0,
+  maze_completed BOOLEAN DEFAULT FALSE,
   status TEXT DEFAULT 'in_progress',
   consent_timestamp TIMESTAMPTZ NOT NULL,
   config JSONB NOT NULL,
@@ -33,8 +35,8 @@ CREATE TABLE IF NOT EXISTS rounds (
   end_timestamp TIMESTAMPTZ,
   duration_ms INTEGER,
   rewards_collected INTEGER DEFAULT 0,
-  black_pixel_positions JSONB NOT NULL,
-  reward_positions JSONB NOT NULL,
+  black_pixel_positions JSONB NOT NULL DEFAULT '[]',
+  reward_positions JSONB NOT NULL DEFAULT '[]',
   cluster_params JSONB,
   end_reason TEXT,
   UNIQUE(session_id, round_index)
@@ -42,7 +44,7 @@ CREATE TABLE IF NOT EXISTS rounds (
 
 CREATE INDEX IF NOT EXISTS idx_rounds_session ON rounds(session_id);
 
--- Movements table (can be large - may want to optimize later)
+-- Movements table (can be large - optimized for agent-based tracking)
 CREATE TABLE IF NOT EXISTS movements (
   id SERIAL PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
@@ -53,9 +55,11 @@ CREATE TABLE IF NOT EXISTS movements (
   timestamp_abs TIMESTAMPTZ NOT NULL,
   x REAL NOT NULL,
   y REAL NOT NULL,
+  heading REAL NOT NULL DEFAULT 0,
   velocity REAL NOT NULL,
   distance_from_last REAL NOT NULL,
-  acceleration REAL NOT NULL
+  acceleration REAL NOT NULL,
+  food_here BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX IF NOT EXISTS idx_movements_session ON movements(session_id);
@@ -102,3 +106,7 @@ CREATE POLICY "Allow anonymous insert" ON events FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anonymous select" ON events FOR SELECT USING (true);
 CREATE POLICY "Allow anonymous delete" ON events FOR DELETE USING (true);
 
+-- Migration script for existing databases (run separately if you have existing data):
+-- ALTER TABLE sessions ADD COLUMN IF NOT EXISTS maze_completed BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE movements ADD COLUMN IF NOT EXISTS heading REAL DEFAULT 0;
+-- ALTER TABLE movements ADD COLUMN IF NOT EXISTS food_here BOOLEAN DEFAULT FALSE;
