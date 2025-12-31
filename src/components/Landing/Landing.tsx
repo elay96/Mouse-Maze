@@ -108,7 +108,7 @@ export function Landing({ onStart }: LandingProps) {
               <path d="M12 14 Q16 18 20 20 Q24 22 28 26" stroke="currentColor" strokeWidth="1.5" fill="none" strokeDasharray="3 2" opacity="0.5" />
             </svg>
           </div>
-          <h1 className={styles.title}>Mouse Maze</h1>
+          <h1 className={styles.title}>The Maze Challenge</h1>
           <p className={styles.subtitle}>Spatial Exploration Study</p>
         </div>
 

@@ -165,7 +165,7 @@ export function AdminDashboard({ onSelectSession, onLogout }: AdminDashboardProp
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <h1 className={styles.title}>Admin Dashboard</h1>
-          <span className={styles.subtitle}>Mouse Maze Research Data</span>
+          <span className={styles.subtitle}>Spatial Exploration Study</span>
         </div>
         <div className={styles.headerRight}>
           <button onClick={handleExportAll} className={styles.exportAllButton}>
