@@ -26,6 +26,8 @@ interface UseAgentPhysicsProps {
   onSampleBatch: (samples: MovementSample[]) => void;
   onPositionUpdate?: (agent: AgentState) => void;
   onBoundaryHit?: (agent: AgentState, boundary: 'top' | 'bottom' | 'left' | 'right') => void;
+  collisionCheck?: (agent: AgentState) => boolean; // Check if position collides with walls
+  onCollision?: (agent: AgentState) => void; // Called when collision occurs (after reset)
   startPosition?: Position;
   startHeading?: number;
   batchSize?: number;
@@ -47,6 +49,8 @@ export function useAgentPhysics({
   onSampleBatch,
   onPositionUpdate,
   onBoundaryHit,
+  collisionCheck,
+  onCollision,
   startPosition,
   startHeading = AGENT_START_HEADING,
   batchSize = 100,
@@ -69,6 +73,7 @@ export function useAgentPhysics({
   const sampleBuffer = useRef<MovementSample[]>([]);
   const foodCollectedThisFrame = useRef<boolean>(false);
   const isActiveRef = useRef<boolean>(isActive);
+  const isInCollisionRef = useRef<boolean>(false); // Track if currently in collision state
 
   // Keep refs in sync
   useEffect(() => {
@@ -221,10 +226,36 @@ export function useAgentPhysics({
       // Move forward (always)
       currentAgent = moveForward(currentAgent, deltaTime);
 
+      // Check for collision BEFORE updating ref (atomic collision handling)
+      if (collisionCheck) {
+        const isColliding = collisionCheck(currentAgent);
+        
+        if (isColliding && !isInCollisionRef.current) {
+          // New collision detected - reset to start position
+          isInCollisionRef.current = true;
+          
+          // Notify collision callback before resetting
+          if (onCollision) {
+            onCollision(currentAgent);
+          }
+          
+          // Reset to start position
+          currentAgent = {
+            x: startPosition?.x ?? AGENT_START_X,
+            y: startPosition?.y ?? AGENT_START_Y,
+            heading: startHeading,
+            velocity: AGENT_SPEED
+          };
+        } else if (!isColliding && isInCollisionRef.current) {
+          // Agent has left collision area, reset flag
+          isInCollisionRef.current = false;
+        }
+      }
+
       // Update ref immediately (for smooth rendering via callback)
       agentRef.current = currentAgent;
       
-      // Notify position update (for collision detection - no React re-render)
+      // Notify position update (for rendering - collision already handled)
       if (onPositionUpdate) {
         onPositionUpdate(currentAgent);
       }
@@ -265,7 +296,7 @@ export function useAgentPhysics({
         animationFrameRef.current = null;
       }
     };
-  }, [isActive, rotate, moveForward, createSample, onPositionUpdate, onSampleBatch, batchSize]);
+  }, [isActive, rotate, moveForward, createSample, onPositionUpdate, onSampleBatch, batchSize, collisionCheck, onCollision, startPosition, startHeading]);
 
   // Keyboard event handlers
   // Controls: A or ArrowLeft = turn left, D or ArrowRight = turn right
@@ -317,6 +348,7 @@ export function useAgentPhysics({
     lastSampleTimeRef.current = 0;
     sampleBuffer.current = [];
     foodCollectedThisFrame.current = false;
+    isInCollisionRef.current = false;
   }, [startPosition, startHeading]);
 
   // Mark that food was collected this frame (for logging)

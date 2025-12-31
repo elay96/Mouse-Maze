@@ -3,7 +3,7 @@
 // Agent resets to start position on wall collision
 
 import { useRef, useEffect, useCallback, useState } from 'react';
-import type { AgentState, GameEvent, Position } from '../../types/schema';
+import type { AgentState, GameEvent } from '../../types/schema';
 import {
   CANVAS_SIZE,
   CANVAS_BACKGROUND,
@@ -74,11 +74,6 @@ export function MazeCanvas({
   
   const mazeStartTimeRef = useRef<number>(0);
   const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
-  const isInCollisionRef = useRef<boolean>(false); // Track if currently in collision state
-  const skipNextUpdateRef = useRef<boolean>(false); // Skip position update after reset
-  
-  // Ref to store resetAgent function - breaks circular dependency
-  const resetAgentRef = useRef<((position?: Position, heading?: number) => void) | null>(null);
 
   // Check if agent collides with any wall
   const checkWallCollision = useCallback((agent: AgentState): boolean => {
@@ -112,61 +107,32 @@ export function MazeCanvas({
     return distance < (MAZE_TARGET_SIZE / 2 + AGENT_SIZE * 0.4);
   }, []);
 
-  // Handle position updates - uses ref to call resetAgent to avoid circular dependency
+  // Handle collision - called by physics hook when collision occurs (agent already reset)
+  const handleCollision = useCallback((agent: AgentState) => {
+    // Increment collision count by exactly 1
+    setCollisionCount(prev => prev + 1);
+    
+    // Log collision event
+    const event: GameEvent = {
+      sessionId,
+      roundIndex: -1, // Maze phase
+      eventType: 'maze_collision',
+      timestampMs: Math.round(performance.now() - mazeStartTimeRef.current),
+      timestampAbs: new Date().toISOString(),
+      metadata: {
+        agentPosition: { x: agent.x, y: agent.y },
+        agentHeading: agent.heading
+      }
+    };
+    saveEvent(event).catch(console.error);
+  }, [sessionId]);
+
+  // Handle position updates - just update visual and check for target
   const handlePositionUpdate = useCallback((agent: AgentState) => {
-    if (!isStarted || isCompleted) return;
-    
-    // Skip this update if we just reset (prevents "jump back" effect)
-    if (skipNextUpdateRef.current) {
-      skipNextUpdateRef.current = false;
-      // Don't update agentRef - keep it at start position
-      return;
-    }
-    
-    // Update agentRef for smooth canvas rendering
+    // Always update agentRef for smooth canvas rendering
     agentRef.current = agent;
     
-    const isCurrentlyInWall = checkWallCollision(agent);
-    
-    // If agent was in collision and is now clear, reset the flag
-    if (isInCollisionRef.current && !isCurrentlyInWall) {
-      isInCollisionRef.current = false;
-    }
-    
-    // Detect NEW collision (only if not already in collision state)
-    if (isCurrentlyInWall && !isInCollisionRef.current) {
-      // Mark as in collision to prevent multiple counts
-      isInCollisionRef.current = true;
-      
-      // Increment collision count by exactly 1
-      setCollisionCount(prev => prev + 1);
-      
-      // Log collision event
-      const event: GameEvent = {
-        sessionId,
-        roundIndex: -1, // Maze phase
-        eventType: 'maze_collision',
-        timestampMs: Math.round(performance.now() - mazeStartTimeRef.current),
-        timestampAbs: new Date().toISOString(),
-        metadata: {
-          agentPosition: { x: agent.x, y: agent.y },
-          agentHeading: agent.heading
-        }
-      };
-      saveEvent(event).catch(console.error);
-      
-      // Reset agent position - update local ref immediately for visual
-      agentRef.current = { x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: agent.velocity };
-      
-      // Skip the next position update (will come with old position from physics)
-      skipNextUpdateRef.current = true;
-      
-      // Reset the physics hook state
-      if (resetAgentRef.current) {
-        resetAgentRef.current({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
-      }
-      return;
-    }
+    if (!isStarted || isCompleted) return;
     
     // Check target reached
     if (checkTargetReached(agent)) {
@@ -189,31 +155,27 @@ export function MazeCanvas({
       // Notify parent
       onComplete();
     }
-  }, [isStarted, isCompleted, sessionId, checkWallCollision, checkTargetReached, onComplete]);
+  }, [isStarted, isCompleted, sessionId, checkTargetReached, onComplete]);
 
   // Agent physics (no-op sample batch for maze phase)
   const handleSampleBatch = useCallback(() => {}, []);
 
-  const { 
-    reset: resetAgent
-  } = useAgentPhysics({
+  // Physics hook handles collision detection and reset internally
+  useAgentPhysics({
     sessionId,
     participantId,
     condition: 'DIFFUSE', // Placeholder - not used in maze
     roundIndex: -1,
-    isActive: isStarted && !isCompleted, // Now uses state, will properly stop when completed
+    isActive: isStarted && !isCompleted,
     roundStartTime: mazeStartTimeRef.current,
     onSampleBatch: handleSampleBatch,
     onPositionUpdate: handlePositionUpdate,
+    collisionCheck: checkWallCollision,
+    onCollision: handleCollision,
     startPosition: { x: MAZE_START_X, y: MAZE_START_Y },
     startHeading: 90,
     wrapBoundaries: false
   });
-
-  // Keep resetAgentRef updated with the latest resetAgent function
-  useEffect(() => {
-    resetAgentRef.current = resetAgent;
-  }, [resetAgent]);
 
   // Canvas rendering
   useEffect(() => {
