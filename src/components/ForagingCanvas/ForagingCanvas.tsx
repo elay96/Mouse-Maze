@@ -8,7 +8,6 @@ import {
   CANVAS_SIZE,
   CANVAS_BACKGROUND,
   N_REWARDS,
-  INTER_ROUND_DELAY,
   AGENT_SIZE,
   AGENT_COLOR,
   RESOURCE_COLLECTED_COLOR,
@@ -30,9 +29,6 @@ interface ForagingCanvasProps {
   onRoundComplete: (round: Round) => void;
 }
 
-// Countdown durations in seconds
-const END_COUNTDOWN_SECONDS = Math.ceil(INTER_ROUND_DELAY / 1000);
-
 export function ForagingCanvas({
   sessionId,
   participantId,
@@ -49,8 +45,6 @@ export function ForagingCanvas({
   } | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isRoundEnded, setIsRoundEnded] = useState(false);
-  const [pendingRound, setPendingRound] = useState<Round | null>(null);
-  const [endCountdown, setEndCountdown] = useState(END_COUNTDOWN_SECONDS);
   const [startCountdown, setStartCountdown] = useState<number | null>(null);
   
   const roundStartTimeRef = useRef<number>(0);
@@ -74,7 +68,6 @@ export function ForagingCanvas({
 
     stopTimer();
     setIsRoundEnded(true);
-    setEndCountdown(END_COUNTDOWN_SECONDS);
 
     const endTimestamp = new Date().toISOString();
     const durationMs = performance.now() - roundStartTimeRef.current;
@@ -111,8 +104,10 @@ export function ForagingCanvas({
     };
 
     saveRound(round).catch(console.error);
-    setPendingRound(round);
-  }, [sessionId, roundIndex, condition, stopTimer]);
+    
+    // Call onRoundComplete immediately (no countdown)
+    onRoundComplete(round);
+  }, [sessionId, roundIndex, condition, stopTimer, onRoundComplete]);
 
   // Handle sample batch save
   const handleSampleBatch = useCallback(async (samples: MovementSample[]) => {
@@ -200,28 +195,6 @@ export function ForagingCanvas({
     wrapBoundaries: true // Wrap around edges like NetLogo
   });
 
-  // End countdown timer effect
-  useEffect(() => {
-    if (!isRoundEnded || !pendingRound) return;
-
-    const countdownInterval = setInterval(() => {
-      setEndCountdown(prev => {
-        const next = prev - 1;
-        if (next <= 0) {
-          clearInterval(countdownInterval);
-          setIsRoundEnded(false);
-          isEndingRef.current = false;
-          onRoundComplete(pendingRound);
-          setPendingRound(null);
-          return 0;
-        }
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(countdownInterval);
-  }, [isRoundEnded, pendingRound, onRoundComplete]);
-
   // Start countdown timer effect
   useEffect(() => {
     if (startCountdown === null) return;
@@ -269,8 +242,6 @@ export function ForagingCanvas({
     rewardsRef.current = newLayout.rewards;
     setScore(0);
     setIsRoundEnded(false);
-    setPendingRound(null);
-    setEndCountdown(END_COUNTDOWN_SECONDS);
     setStartCountdown(null);
     eventsRef.current = [];
     resetAgent();
@@ -405,22 +376,6 @@ export function ForagingCanvas({
           </div>
         )}
 
-        {isRoundEnded && (
-          <div className={styles.countdownOverlay}>
-            <div className={styles.countdownContent}>
-              <h2>Round Complete</h2>
-              <p className={styles.finalScore}>
-                You collected <strong>{score}</strong> of <strong>{N_REWARDS}</strong> resources
-              </p>
-              <div className={styles.countdownTimer}>
-                <span className={styles.countdownNumber}>{endCountdown}</span>
-              </div>
-              <p className={styles.countdownText}>
-                Next round starts in {endCountdown} second{endCountdown !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className={styles.footer}>

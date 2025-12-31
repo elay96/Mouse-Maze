@@ -174,3 +174,22 @@
   margin: 1.25rem 0 0;
   line-height: 1.5;
 }
+
+.testingHint {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: #6366f1;
+  text-align: center;
+  margin: 1rem 0 0;
+  padding: 0.75rem;
+  background: #eef2ff;
+  border: 1px dashed #a5b4fc;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.testingHint strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}

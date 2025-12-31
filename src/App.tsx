@@ -433,7 +433,7 @@ function App() {
         onOk={handlePreForagingOk}
         onHalt={handleModalHalt}
         okText="OK"
-        haltText="Halt"
+        haltText="Quit"
       >
         <p>
           Now, using the same keys to move around, collect hidden resources. 
@@ -451,7 +451,7 @@ function App() {
         onOk={handleEndLevelOk}
         onHalt={handleModalHalt}
         okText="OK"
-        haltText="Halt"
+        haltText="Quit"
       >
         <p>Level completed.</p>
         <p><strong>Your score was: {lastRoundScore}</strong></p>

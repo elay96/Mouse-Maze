@@ -88,6 +88,10 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
         <p className={styles.note}>
           This area is for researchers only. Contact the study administrator if you need access.
         </p>
+
+        <p className={styles.testingHint}>
+          Testing phase: Password is <strong>kinneret-lab-1234</strong>
+        </p>
       </div>
     </div>
   );
