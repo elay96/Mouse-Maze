@@ -114,16 +114,22 @@ export function MazeCanvas({
 
   // Handle position updates - uses ref to call resetAgent to avoid circular dependency
   const handlePositionUpdate = useCallback((agent: AgentState) => {
-    // Update agentRef for smooth canvas rendering
-    agentRef.current = agent;
-    
     if (!isStarted || isCompleted) return;
     
     // Check wall collision (point-based) with cooldown to prevent multiple rapid collisions
     const now = performance.now();
     const timeSinceLastCollision = now - lastCollisionTimeRef.current;
     
-    if (checkWallCollision(agent) && timeSinceLastCollision > collisionCooldown) {
+    // During cooldown, keep agent at start position (don't update agentRef)
+    if (timeSinceLastCollision <= collisionCooldown) {
+      // Agent is in cooldown after collision, keep at start position
+      return;
+    }
+    
+    // Update agentRef for smooth canvas rendering (only when not in cooldown)
+    agentRef.current = agent;
+    
+    if (checkWallCollision(agent)) {
       // Update collision time immediately to prevent multiple counts
       lastCollisionTimeRef.current = now;
       
@@ -144,7 +150,10 @@ export function MazeCanvas({
       };
       saveEvent(event).catch(console.error);
       
-      // Reset agent position using ref (breaks circular dependency)
+      // Reset agent position - update local ref immediately for visual feedback
+      agentRef.current = { x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: agent.velocity };
+      
+      // Also reset the physics hook state
       if (resetAgentRef.current) {
         resetAgentRef.current({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
       }
