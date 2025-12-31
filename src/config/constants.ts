@@ -20,12 +20,13 @@ export const GAME_FPS = 60;                // target frames per second
 export const FRAME_INTERVAL = Math.floor(1000 / GAME_FPS); // ~16.67ms
 
 // ============ CONCENTRATED CONDITION PARAMETERS ============
-// 4 dense clusters (NetLogo: 4 seed points expanded 20 times)
-export const CONCENTRATED_N_CLUSTERS = 4;  // number of cluster centers
-export const CONCENTRATED_EXPANSION = 20;  // expansion iterations per seed
-export const CONCENTRATED_CLUSTER_RADIUS = 100; // pixels, radius per cluster
-export const CONCENTRATED_MIN_SEPARATION = 300; // pixels, minimum distance between cluster centers
-export const CONCENTRATED_EDGE_MARGIN = 150; // pixels, minimum distance from canvas edge
+// 4 diamond-shaped clusters randomly distributed
+export const CONCENTRATED_N_CLUSTERS = 4;  // number of diamond clusters
+export const CONCENTRATED_EXPANSION = 20;  // expansion iterations per seed (legacy)
+export const CONCENTRATED_CLUSTER_RADIUS = 100; // pixels, legacy - kept for compatibility
+export const CONCENTRATED_DIAMOND_SIZE = 150; // pixels, width/height of each diamond
+export const CONCENTRATED_MIN_SEPARATION = 200; // pixels, minimum distance between diamond centers
+export const CONCENTRATED_EDGE_MARGIN = 120; // pixels, minimum distance from canvas edge
 
 // ============ DIFFUSE CONDITION PARAMETERS ============
 // Scattered resources (~700 seed points + neighbors)

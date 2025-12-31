@@ -10,7 +10,7 @@ import {
   CANVAS_SIZE,
   N_REWARDS,
   CONCENTRATED_N_CLUSTERS,
-  CONCENTRATED_CLUSTER_RADIUS,
+  CONCENTRATED_DIAMOND_SIZE,
   CONCENTRATED_MIN_SEPARATION,
   CONCENTRATED_EDGE_MARGIN,
   DIFFUSE_EDGE_MARGIN,
@@ -43,19 +43,24 @@ function respectsSpacing(pos: Position, existing: Position[], minSpacing: number
 }
 
 /**
- * Sample a point uniformly within a circle
+ * Sample a point uniformly within a diamond (rhombus rotated 45°)
+ * Diamond has vertices at top, bottom, left, right at distance size/2 from center
  */
-function sampleInCircle(rng: SeededRandom, centerX: number, centerY: number, radius: number): Position {
-  // Use rejection sampling for uniform distribution in circle
-  let x: number, y: number;
-  do {
-    x = rng.nextFloat(-radius, radius);
-    y = rng.nextFloat(-radius, radius);
-  } while (x * x + y * y > radius * radius);
+function sampleInDiamond(rng: SeededRandom, centerX: number, centerY: number, size: number): Position {
+  // Use two random values to interpolate within diamond
+  // This creates uniform distribution within the rhombus
+  const u = rng.nextFloat(0, 1);
+  const v = rng.nextFloat(0, 1);
+  
+  // Transform to diamond coordinates
+  // Maps unit square to diamond shape
+  const halfSize = size / 2;
+  const x = centerX + halfSize * (u - v);
+  const y = centerY + halfSize * (u + v - 1);
   
   return {
-    x: Math.round(centerX + x),
-    y: Math.round(centerY + y)
+    x: Math.round(x),
+    y: Math.round(y)
   };
 }
 
@@ -68,16 +73,17 @@ interface ConcentratedGenerationResult {
 }
 
 /**
- * Generate cluster centers for CONCENTRATED condition
- * Creates 4 clusters ensuring minimum separation and edge margin
+ * Generate diamond cluster centers for CONCENTRATED condition
+ * Creates 4 diamond clusters ensuring minimum separation and edge margin
  */
-function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: number; radius: number }> {
-  const centers: Array<{ x: number; y: number; radius: number }> = [];
+function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: number; size: number }> {
+  const centers: Array<{ x: number; y: number; size: number }> = [];
   const maxAttempts = 1000;
-  const minX = CONCENTRATED_EDGE_MARGIN + CONCENTRATED_CLUSTER_RADIUS;
-  const maxX = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - CONCENTRATED_CLUSTER_RADIUS;
-  const minY = CONCENTRATED_EDGE_MARGIN + CONCENTRATED_CLUSTER_RADIUS;
-  const maxY = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - CONCENTRATED_CLUSTER_RADIUS;
+  const halfDiamond = CONCENTRATED_DIAMOND_SIZE / 2;
+  const minX = CONCENTRATED_EDGE_MARGIN + halfDiamond;
+  const maxX = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - halfDiamond;
+  const minY = CONCENTRATED_EDGE_MARGIN + halfDiamond;
+  const maxY = CANVAS_SIZE - CONCENTRATED_EDGE_MARGIN - halfDiamond;
   
   for (let i = 0; i < CONCENTRATED_N_CLUSTERS; i++) {
     let attempts = 0;
@@ -87,7 +93,7 @@ function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: n
       const x = rng.nextInt(minX, maxX);
       const y = rng.nextInt(minY, maxY);
       
-      const candidate = { x, y, radius: CONCENTRATED_CLUSTER_RADIUS };
+      const candidate = { x, y, size: CONCENTRATED_DIAMOND_SIZE };
       const isValid = centers.every(c => distance(candidate, c) >= CONCENTRATED_MIN_SEPARATION);
       
       if (isValid) {
@@ -102,7 +108,7 @@ function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: n
       centers.push({
         x: rng.nextInt(minX, maxX),
         y: rng.nextInt(minY, maxY),
-        radius: CONCENTRATED_CLUSTER_RADIUS
+        size: CONCENTRATED_DIAMOND_SIZE
       });
     }
   }
@@ -112,12 +118,12 @@ function generateConcentratedCenters(rng: SeededRandom): Array<{ x: number; y: n
 
 /**
  * Generate reward positions for CONCENTRATED condition
- * Distributes rewards densely within 4 clusters
+ * Distributes rewards densely within 4 diamond-shaped clusters
  * GUARANTEES exactly N_REWARDS rewards are generated
  */
 function generateConcentratedRewards(
   rng: SeededRandom,
-  centers: Array<{ x: number; y: number; radius: number }>
+  centers: Array<{ x: number; y: number; size: number }>
 ): Reward[] {
   const rewards: Reward[] = [];
   const maxAttemptsPerReward = 50;
@@ -125,7 +131,7 @@ function generateConcentratedRewards(
   let totalAttempts = 0;
   let currentSpacing = REWARD_MIN_SPACING;
   
-  // Distribute rewards among clusters
+  // Distribute rewards among diamond clusters
   const rewardsPerCluster = Math.floor(N_REWARDS / centers.length);
   const extraRewards = N_REWARDS % centers.length;
   
@@ -140,7 +146,7 @@ function generateConcentratedRewards(
       let placed = false;
       
       while (attempts < maxAttemptsPerReward && !placed) {
-        const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+        const pos = sampleInDiamond(rng, center.x, center.y, center.size);
         
         // Ensure within canvas bounds with margin
         const clampedX = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
@@ -166,7 +172,7 @@ function generateConcentratedRewards(
         currentSpacing = Math.max(3, currentSpacing * 0.9);
         
         // Force place with reduced spacing
-        const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+        const pos = sampleInDiamond(rng, center.x, center.y, center.size);
         const x = clamp(pos.x, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
         const y = clamp(pos.y, REWARD_EDGE_MARGIN, CANVAS_SIZE - REWARD_EDGE_MARGIN);
         
@@ -189,7 +195,7 @@ function generateConcentratedRewards(
   while (rewards.length < N_REWARDS) {
     const clusterIdx = rewards.length % centers.length;
     const center = centers[clusterIdx];
-    const pos = sampleInCircle(rng, center.x, center.y, center.radius);
+    const pos = sampleInDiamond(rng, center.x, center.y, center.size);
     
     rewards.push({
       id: rewards.length,

@@ -32,7 +32,7 @@ export interface ClusterParams {
   centers: Array<{
     x: number;
     y: number;
-    radius: number;
+    size: number; // Diamond size (width/height)
   }>;
 }
 
