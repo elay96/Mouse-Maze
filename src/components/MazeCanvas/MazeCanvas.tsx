@@ -120,16 +120,8 @@ export function MazeCanvas({
     const now = performance.now();
     const timeSinceLastCollision = now - lastCollisionTimeRef.current;
     
-    // During cooldown, keep agent at start position (don't update agentRef)
-    if (timeSinceLastCollision <= collisionCooldown) {
-      // Agent is in cooldown after collision, keep at start position
-      return;
-    }
-    
-    // Update agentRef for smooth canvas rendering (only when not in cooldown)
-    agentRef.current = agent;
-    
-    if (checkWallCollision(agent)) {
+    // Check for collision (only count if cooldown has elapsed)
+    if (checkWallCollision(agent) && timeSinceLastCollision > collisionCooldown) {
       // Update collision time immediately to prevent multiple counts
       lastCollisionTimeRef.current = now;
       
@@ -150,15 +142,15 @@ export function MazeCanvas({
       };
       saveEvent(event).catch(console.error);
       
-      // Reset agent position - update local ref immediately for visual feedback
-      agentRef.current = { x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: agent.velocity };
-      
-      // Also reset the physics hook state
+      // Reset agent position using physics hook
       if (resetAgentRef.current) {
         resetAgentRef.current({ x: MAZE_START_X, y: MAZE_START_Y }, 90);
       }
       return;
     }
+    
+    // Update agentRef for smooth canvas rendering
+    agentRef.current = agent;
     
     // Check target reached
     if (checkTargetReached(agent)) {
