@@ -37,38 +37,26 @@ interface Wall {
   height: number;
 }
 
-// Generate a simple maze layout
+// Generate a simple slalom maze layout
+// Player starts bottom-left, navigates through two horizontal barriers with alternating gaps
 function generateMazeWalls(): Wall[] {
   const t = MAZE_WALL_THICKNESS;
   const s = CANVAS_SIZE;
   
-  // Create a maze with multiple paths but clear obstacles
   return [
-    // Outer boundary (with gaps for variety)
-    { x: 0, y: 0, width: s, height: t }, // Top wall
-    { x: 0, y: s - t, width: s, height: t }, // Bottom wall
-    { x: 0, y: 0, width: t, height: s }, // Left wall
-    { x: s - t, y: 0, width: t, height: s }, // Right wall
+    // Outer boundary (4 walls)
+    { x: 0, y: 0, width: s, height: t },           // Top wall
+    { x: 0, y: s - t, width: s, height: t },       // Bottom wall
+    { x: 0, y: 0, width: t, height: s },           // Left wall
+    { x: s - t, y: 0, width: t, height: s },       // Right wall
     
-    // Internal walls creating a maze pattern
-    // Horizontal barriers
-    { x: 150, y: 200, width: 300, height: t },
-    { x: 550, y: 200, width: 300, height: t },
-    { x: 100, y: 400, width: 250, height: t },
-    { x: 450, y: 400, width: 400, height: t },
-    { x: 200, y: 600, width: 350, height: t },
-    { x: 650, y: 600, width: 200, height: t },
-    { x: 100, y: 800, width: 400, height: t },
+    // Bottom horizontal barrier - gap on RIGHT side
+    // Player must go RIGHT to pass through
+    { x: t, y: 600, width: 650, height: t },
     
-    // Vertical barriers
-    { x: 250, y: 100, width: t, height: 150 },
-    { x: 500, y: 50, width: t, height: 200 },
-    { x: 750, y: 200, width: t, height: 250 },
-    { x: 350, y: 400, width: t, height: 250 },
-    { x: 600, y: 500, width: t, height: 150 },
-    { x: 150, y: 600, width: t, height: 250 },
-    { x: 500, y: 700, width: t, height: 200 },
-    { x: 800, y: 650, width: t, height: 200 },
+    // Top horizontal barrier - gap on LEFT side
+    // Player must go LEFT to pass through
+    { x: 330, y: 350, width: 650, height: t },
   ];
 }
 
@@ -85,6 +73,7 @@ export function MazeCanvas({
   
   const mazeStartTimeRef = useRef<number>(0);
   const isCompletedRef = useRef<boolean>(false);
+  const agentRef = useRef<AgentState>({ x: MAZE_START_X, y: MAZE_START_Y, heading: 90, velocity: 0 });
 
   // Check if agent collides with any wall
   const checkWallCollision = useCallback((agent: AgentState): boolean => {
@@ -120,6 +109,9 @@ export function MazeCanvas({
 
   // Handle position updates
   const handlePositionUpdate = useCallback((agent: AgentState) => {
+    // Update agentRef for smooth canvas rendering
+    agentRef.current = agent;
+    
     if (!isStarted || isCompletedRef.current) return;
     
     // Check wall collision
@@ -211,11 +203,12 @@ export function MazeCanvas({
       ctx.fillStyle = MAZE_TARGET_COLOR;
       ctx.fillRect(MAZE_TARGET_X, MAZE_TARGET_Y, MAZE_TARGET_SIZE, MAZE_TARGET_SIZE);
 
-      // Draw agent (yellow triangle)
+      // Draw agent (yellow triangle) - use ref for smooth 60fps rendering
       if (isStarted) {
+        const currentAgent = agentRef.current;
         ctx.save();
-        ctx.translate(agent.x, agent.y);
-        ctx.rotate(-agent.heading * Math.PI / 180 + Math.PI / 2);
+        ctx.translate(currentAgent.x, currentAgent.y);
+        ctx.rotate(-currentAgent.heading * Math.PI / 180 + Math.PI / 2);
 
         ctx.fillStyle = AGENT_COLOR;
         ctx.beginPath();
@@ -238,7 +231,7 @@ export function MazeCanvas({
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [walls, agent, isStarted]);
+  }, [walls, isStarted]);
 
   // Start handler
   const handleStart = useCallback(() => {

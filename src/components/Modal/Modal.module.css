@@ -1,0 +1,154 @@
+/* Modal Component Styles */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: #1a1a2e;
+  border: 2px solid #3a3a5a;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.iconContainer {
+  margin-bottom: 1.5rem;
+}
+
+.iconContainer svg {
+  width: 64px;
+  height: 64px;
+}
+
+.iconInfo {
+  color: #3b82f6;
+}
+
+.iconSuccess {
+  color: #22c55e;
+}
+
+.iconWarning {
+  color: #f59e0b;
+}
+
+.title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.content {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: #d1d5db;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.content p {
+  margin: 0.75rem 0;
+}
+
+.content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.okButton,
+.haltButton {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.okButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.okButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.okButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.haltButton {
+  background: #374151;
+  color: #d1d5db;
+  border: 1px solid #4b5563;
+}
+
+.haltButton:hover {
+  background: #4b5563;
+  color: #ffffff;
+}
+
+.haltButton:active {
+  background: #374151;
+}
+
+/* Score highlight for end-of-level modal */
+.score {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin: 1rem 0;
+}
+
+.trialsLeft {
+  font-size: 1.125rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+

@@ -221,18 +221,20 @@ export function useAgentPhysics({
       // Move forward (always)
       currentAgent = moveForward(currentAgent, deltaTime);
 
-      // Update state
+      // Update ref immediately (for smooth rendering via callback)
       agentRef.current = currentAgent;
-      setAgent(currentAgent);
       
-      // Notify position update
+      // Notify position update (for collision detection - no React re-render)
       if (onPositionUpdate) {
         onPositionUpdate(currentAgent);
       }
 
-      // Sample at fixed interval (10Hz)
+      // Sample at fixed interval (10Hz) - also update React state here for UI
       const timeSinceLastSample = timestamp - lastSampleTimeRef.current;
       if (timeSinceLastSample >= SAMPLE_INTERVAL) {
+        // Update React state only at sample rate (10Hz) to avoid lag
+        setAgent(currentAgent);
+        
         const sample = createSample(currentAgent, lastAgentForSample);
         sampleBuffer.current.push(sample);
         lastAgentForSample = { ...currentAgent };
@@ -267,25 +269,26 @@ export function useAgentPhysics({
 
   // Keyboard event handlers
   // Controls: A or ArrowLeft = turn left, D or ArrowRight = turn right
+  // Uses e.code for physical key detection (works with any keyboard language)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isActiveRef.current) return;
       
-      const key = e.key.toLowerCase();
-      if (key === 'a' || key === 'arrowleft') {
+      const code = e.code;
+      if (code === 'KeyA' || code === 'ArrowLeft') {
         keyStateRef.current.left = true;
         e.preventDefault(); // Prevent page scrolling with arrow keys
-      } else if (key === 'd' || key === 'arrowright') {
+      } else if (code === 'KeyD' || code === 'ArrowRight') {
         keyStateRef.current.right = true;
         e.preventDefault();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (key === 'a' || key === 'arrowleft') {
+      const code = e.code;
+      if (code === 'KeyA' || code === 'ArrowLeft') {
         keyStateRef.current.left = false;
-      } else if (key === 'd' || key === 'arrowright') {
+      } else if (code === 'KeyD' || code === 'ArrowRight') {
         keyStateRef.current.right = false;
       }
     };

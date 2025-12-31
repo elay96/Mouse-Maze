@@ -60,9 +60,10 @@ export function ForagingCanvas({
   const rewardsRef = useRef<Reward[]>([]);
   const layoutRef = useRef<typeof layout>(null);
   const collectedIdsRef = useRef<Set<number>>(new Set());
+  const agentRef = useRef<AgentState>({ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2, heading: 90, velocity: 0 });
 
   // Timer hook
-  const { start: startTimer, stop: stopTimer, formattedTime } = useGameTimer({
+  const { start: startTimer, stop: stopTimer, reset: resetTimer, formattedTime } = useGameTimer({
     onTimeUp: () => handleRoundEnd('timeout')
   });
 
@@ -120,6 +121,9 @@ export function ForagingCanvas({
 
   // Check for resource collision when agent position updates
   const handlePositionUpdate = useCallback((agent: AgentState) => {
+    // Update agentRef for smooth canvas rendering
+    agentRef.current = agent;
+    
     if (!isStarted || isRoundEnded) return;
     
     const rewards = rewardsRef.current;
@@ -270,8 +274,9 @@ export function ForagingCanvas({
     setStartCountdown(null);
     eventsRef.current = [];
     resetAgent();
+    resetTimer(); // Reset timer for new round
     setIsStarted(false);
-  }, [condition, roundIndex, participantId, resetAgent]);
+  }, [condition, roundIndex, participantId, resetAgent, resetTimer]);
 
   // Canvas rendering
   useEffect(() => {
@@ -296,11 +301,12 @@ export function ForagingCanvas({
         }
       }
 
-      // Draw agent (yellow triangle) if game is active
+      // Draw agent (yellow triangle) if game is active - use ref for smooth 60fps rendering
       if (isStarted || startCountdown !== null) {
+        const currentAgent = agentRef.current;
         ctx.save();
-        ctx.translate(agent.x, agent.y);
-        ctx.rotate(-agent.heading * Math.PI / 180 + Math.PI / 2); // Adjust for canvas coordinate system
+        ctx.translate(currentAgent.x, currentAgent.y);
+        ctx.rotate(-currentAgent.heading * Math.PI / 180 + Math.PI / 2); // Adjust for canvas coordinate system
 
         ctx.fillStyle = AGENT_COLOR;
         ctx.beginPath();
@@ -323,7 +329,7 @@ export function ForagingCanvas({
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [rewards, agent, isStarted, isRoundEnded, startCountdown]);
+  }, [rewards, isStarted, isRoundEnded, startCountdown]);
 
   // Start round handler
   const handleStart = useCallback(() => {

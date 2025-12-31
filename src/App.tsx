@@ -35,6 +35,7 @@ import { ForagingCanvas } from './components/ForagingCanvas';
 import { RoundTransition } from './components/RoundTransition';
 import { Completion } from './components/Completion';
 import { AdminLogin, AdminDashboard, SessionDetail } from './components/Admin';
+import { Modal } from './components/Modal';
 
 import './App.css';
 
@@ -63,6 +64,11 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [allMovements, setAllMovements] = useState<MovementSample[]>([]);
   const [allEvents, setAllEvents] = useState<GameEvent[]>([]);
+  
+  // Modal state
+  const [showPreForagingModal, setShowPreForagingModal] = useState(false);
+  const [showEndLevelModal, setShowEndLevelModal] = useState(false);
+  const [lastRoundScore, setLastRoundScore] = useState(0);
   
   // Admin state
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -175,7 +181,7 @@ function App() {
     setScreen('maze_training');
   }, []);
 
-  // Handle maze training complete -> start foraging rounds
+  // Handle maze training complete -> show pre-foraging modal
   const handleMazeComplete = useCallback(async () => {
     setMazeCompleted(true);
     
@@ -185,13 +191,38 @@ function App() {
       cloudUpdateSession(sessionId, { mazeCompleted: true });
     }
     
-    setScreen('foraging');
+    // Show pre-foraging instruction modal
+    setShowPreForagingModal(true);
   }, [sessionId]);
 
-  // Handle round complete
+  // Handle pre-foraging modal OK -> start foraging
+  const handlePreForagingOk = useCallback(() => {
+    setShowPreForagingModal(false);
+    setScreen('foraging');
+  }, []);
+
+  // Handle modal Halt -> exit to landing
+  const handleModalHalt = useCallback(() => {
+    setShowPreForagingModal(false);
+    setShowEndLevelModal(false);
+    // Reset all state and go to landing
+    setParticipantId(null);
+    setSessionId(null);
+    setCondition(null);
+    setCurrentRound(0);
+    setMazeCompleted(false);
+    setCompletedRounds([]);
+    setSession(null);
+    setAllMovements([]);
+    setAllEvents([]);
+    setScreen('landing');
+  }, []);
+
+  // Handle round complete - show end level modal
   const handleRoundComplete = useCallback(async (round: Round) => {
     const newRounds = [...completedRounds, round];
     setCompletedRounds(newRounds);
+    setLastRoundScore(round.rewardsCollected);
 
     if (sessionId) {
       await updateSession(sessionId, {
@@ -219,10 +250,9 @@ function App() {
       }
     }
 
-    // Check if more rounds
+    // Check if more rounds - show end level modal
     if (newRounds.length < N_ROUNDS) {
-      setCurrentRound(newRounds.length);
-      setScreen('foraging');
+      setShowEndLevelModal(true);
     } else {
       // All rounds complete
       if (sessionId) {
@@ -251,6 +281,13 @@ function App() {
       setScreen('completion');
     }
   }, [completedRounds, sessionId]);
+
+  // Handle end level modal OK -> continue to next round
+  const handleEndLevelOk = useCallback(() => {
+    setShowEndLevelModal(false);
+    setCurrentRound(completedRounds.length);
+    setScreen('foraging');
+  }, [completedRounds.length]);
 
   // Handle continue after round transition
   const handleContinue = useCallback(() => {
@@ -382,9 +419,45 @@ function App() {
     }
   };
 
+  // Calculate trials left for end level modal
+  const trialsLeft = N_ROUNDS - completedRounds.length;
+
   return (
     <div className="app">
       {renderScreen()}
+      
+      {/* Pre-Foraging Instruction Modal */}
+      <Modal
+        isOpen={showPreForagingModal}
+        icon="info"
+        onOk={handlePreForagingOk}
+        onHalt={handleModalHalt}
+        okText="OK"
+        haltText="Halt"
+      >
+        <p>
+          Now, using the same keys to move around, collect hidden resources. 
+          Resources will appear in blue when you move over them. Your score is 
+          visible in the yellow box outside the search area. Move around and try 
+          to collect as much as you can in the time allowed. This task will repeat 
+          five times. See if you can improve your score each time.
+        </p>
+      </Modal>
+
+      {/* End of Level Feedback Modal */}
+      <Modal
+        isOpen={showEndLevelModal}
+        icon="success"
+        onOk={handleEndLevelOk}
+        onHalt={handleModalHalt}
+        okText="OK"
+        haltText="Halt"
+      >
+        <p>Level completed.</p>
+        <p><strong>Your score was: {lastRoundScore}</strong></p>
+        <p>You have {trialsLeft} trial(s) left in this task.</p>
+        <p>Press 'OK' to continue.</p>
+      </Modal>
     </div>
   );
 }
