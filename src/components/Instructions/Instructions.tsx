@@ -24,7 +24,7 @@ export function Instructions({ participantId, condition, onStart }: Instructions
           </div>
         </div>
 
-        <h1 className={styles.title}>Spatial Foraging Task</h1>
+        <h1 className={styles.title}>The Maze Challenge</h1>
         <p className={styles.subtitle}>Learn to navigate and collect hidden resources</p>
 
         <div className={styles.phases}>

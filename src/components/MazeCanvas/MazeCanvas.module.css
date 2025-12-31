@@ -1,4 +1,4 @@
-/* Maze Canvas Styles - Training Phase */
+/* Maze Canvas Styles - Training Phase - Light Theme */
 
 .container {
   display: flex;
@@ -7,7 +7,7 @@
   gap: 1.25rem;
   padding: 1.5rem;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: #f8f9fa;
 }
 
 .header {
@@ -17,16 +17,16 @@
   width: 100%;
   max-width: 840px;
   padding: 0.75rem 1.25rem;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 10px;
-  border: 1px solid #2a2a3a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .phase {
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #60a5fa;
+  color: #3b82f6;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -34,7 +34,7 @@
 .stats {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .collisionCount {
@@ -47,7 +47,7 @@
 .objective {
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .targetText {
@@ -60,15 +60,15 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 
-    0 0 0 2px #2a2a3a,
-    0 8px 32px rgba(0, 0, 0, 0.5);
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .canvas {
   display: block;
   width: min(88vw, 720px);
   height: min(88vw, 720px);
-  background: #000000;
+  background: #f5f5f5;
 }
 
 .overlay {
@@ -77,30 +77,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 15, 0.96);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .overlayContent {
   text-align: center;
   padding: 2.5rem;
   max-width: 420px;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 16px;
-  border: 1px solid #2a2a3a;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .overlayContent h2 {
   font-family: 'Inter', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1a1a2e;
   margin-bottom: 0.75rem;
 }
 
 .overlayContent > p {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -113,11 +115,11 @@
   gap: 0.75rem;
   margin: 1rem 0;
   padding: 0.75rem 1rem;
-  background: #1a1a2a;
+  background: #f8f9fa;
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
-  color: #d1d5db;
+  color: #475569;
 }
 
 .targetPreview {
@@ -163,29 +165,29 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
-  background: #2a2a3a;
-  border: 2px solid #3a3a4a;
+  color: #1a1a2e;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  box-shadow: 0 4px 0 #1a1a2a;
+  box-shadow: 0 4px 0 #e2e8f0;
 }
 
 .keyOr {
   font-family: 'Inter', sans-serif;
   font-size: 0.625rem;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0 0.125rem;
 }
 
 .keyAction {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .hint {
   font-size: 0.8125rem !important;
-  color: #6b7280 !important;
+  color: #94a3b8 !important;
   margin-top: 1rem !important;
 }
 
@@ -195,8 +197,8 @@
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #0a0a0f;
-  background: #60a5fa;
+  color: #ffffff;
+  background: #3b82f6;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -204,12 +206,12 @@
 }
 
 .startButton:hover {
-  background: #93c5fd;
+  background: #2563eb;
   transform: translateY(-1px);
 }
 
 .startButton:active {
-  background: #3b82f6;
+  background: #1d4ed8;
   transform: translateY(0);
 }
 
@@ -225,7 +227,7 @@
 .instructions {
   font-family: 'Inter', sans-serif;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: #94a3b8;
   text-align: center;
 }
 
@@ -242,15 +244,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 15, 0.9);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .successContent {
   text-align: center;
   padding: 2.5rem;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 16px;
   border: 2px solid #22c55e;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(34, 197, 94, 0.15);
   animation: successPulse 0.5s ease;
 }
 
@@ -265,6 +270,5 @@
 .successContent p {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
 }
-

@@ -1,4 +1,4 @@
-/* Foraging Canvas Styles - NetLogo-inspired dark theme */
+/* Foraging Canvas Styles - Light Theme */
 
 .container {
   display: flex;
@@ -7,7 +7,7 @@
   gap: 1.25rem;
   padding: 1.5rem;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: #f8f9fa;
 }
 
 .header {
@@ -17,28 +17,28 @@
   width: 100%;
   max-width: 840px;
   padding: 0.75rem 1.25rem;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 10px;
-  border: 1px solid #2a2a3a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .roundInfo {
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .score {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .scoreValue {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
-  color: #ffd700;
+  color: #1a1a2e;
   font-size: 1rem;
 }
 
@@ -46,7 +46,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #60a5fa;
+  color: #3b82f6;
   min-width: 80px;
   text-align: right;
 }
@@ -56,15 +56,15 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 
-    0 0 0 2px #2a2a3a,
-    0 8px 32px rgba(0, 0, 0, 0.5);
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .canvas {
   display: block;
   width: min(88vw, 720px);
   height: min(88vw, 720px);
-  background: #000000;
+  background: #f5f5f5;
 }
 
 .overlay {
@@ -73,30 +73,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 15, 0.96);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .overlayContent {
   text-align: center;
   padding: 2.5rem;
   max-width: 400px;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 16px;
-  border: 1px solid #2a2a3a;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .overlayContent h2 {
   font-family: 'Inter', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1a1a2e;
   margin-bottom: 1rem;
 }
 
 .overlayContent p {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
   margin-bottom: 0.5rem;
   line-height: 1.6;
 }
@@ -130,29 +132,29 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
-  background: #2a2a3a;
-  border: 2px solid #3a3a4a;
+  color: #1a1a2e;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  box-shadow: 0 4px 0 #1a1a2a;
+  box-shadow: 0 4px 0 #e2e8f0;
 }
 
 .keyOr {
   font-family: 'Inter', sans-serif;
   font-size: 0.625rem;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0 0.125rem;
 }
 
 .keyAction {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .hint {
   font-size: 0.8125rem !important;
-  color: #6b7280 !important;
+  color: #94a3b8 !important;
   margin-top: 1rem !important;
 }
 
@@ -162,8 +164,8 @@
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #0a0a0f;
-  background: #ffd700;
+  color: #ffffff;
+  background: #3b82f6;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -171,12 +173,12 @@
 }
 
 .startButton:hover {
-  background: #ffed4a;
+  background: #2563eb;
   transform: translateY(-1px);
 }
 
 .startButton:active {
-  background: #e6c200;
+  background: #1d4ed8;
   transform: translateY(0);
 }
 
@@ -197,34 +199,34 @@
   letter-spacing: 0.02em;
   border-radius: 6px;
   text-transform: uppercase;
-  background: #2a2a3a;
-  color: #9ca3af;
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .conditionBadge[data-condition="CONCENTRATED"] {
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.15);
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
 }
 
 .conditionBadge[data-condition="DIFFUSE"] {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.1);
 }
 
 .instructions {
   font-family: 'Inter', sans-serif;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: #94a3b8;
   text-align: center;
 }
 
 /* Timer warning states */
 .timer[data-warning="true"] {
-  color: #fbbf24;
+  color: #d97706;
 }
 
 .timer[data-critical="true"] {
-  color: #ef4444;
+  color: #dc2626;
   animation: pulse 0.75s ease-in-out infinite;
 }
 
@@ -240,35 +242,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 15, 0.96);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .countdownContent {
   text-align: center;
   padding: 2.5rem 3rem;
-  background: #15151f;
+  background: #ffffff;
   border-radius: 16px;
-  border: 1px solid #2a2a3a;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.12);
 }
 
 .countdownContent h2 {
   font-family: 'Inter', sans-serif;
   font-size: 1.375rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1a1a2e;
   margin: 0 0 0.75rem;
 }
 
 .finalScore {
   font-family: 'Inter', sans-serif;
   font-size: 0.9375rem;
-  color: #9ca3af;
+  color: #64748b;
   margin: 0 0 1.5rem;
 }
 
 .finalScore strong {
-  color: #ffd700;
+  color: #1a1a2e;
   font-weight: 600;
 }
 
@@ -276,7 +279,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #60a5fa;
+  color: #3b82f6;
   margin: 0 0 1.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -289,8 +292,8 @@
   width: 80px;
   height: 80px;
   margin: 0 auto 1rem;
-  background: #2a2a3a;
-  border: 2px solid #3a3a4a;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
   border-radius: 50%;
 }
 
@@ -298,14 +301,13 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 2.25rem;
   font-weight: 600;
-  color: #ffd700;
+  color: #3b82f6;
   line-height: 1;
 }
 
 .countdownText {
   font-family: 'Inter', sans-serif;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0;
 }
-
